@@ -1,0 +1,8 @@
+*env/
+*.pyc
+*.DS_Store
+*db.
+*.db
+*.xml
+*.iml
+*.sqlite3
