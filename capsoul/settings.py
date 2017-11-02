@@ -25,7 +25,7 @@ SECRET_KEY = 'cv%oioh0xw96#*4!yc^*ij&ozhsc14b+!bx_pi-8h)%66dfi2r'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['10.9.6.123', 'docker.cs.wallawalla.edu']
 
 
 # Application definition
@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'capsoul.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'db/db.sqlite3'),
     }
 }
 

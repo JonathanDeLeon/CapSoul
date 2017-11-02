@@ -1,0 +1,6 @@
+before_script:
+  - python -V
+
+test:
+  script:
+  - python manage.py test
