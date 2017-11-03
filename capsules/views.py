@@ -9,10 +9,12 @@ from django.views.decorators.http import require_http_methods, require_GET, requ
 @require_http_methods(["GET", "POST"])
 def all_capsules(request):
     if request.method == 'GET':
-        return JsonResponse({"capsules": [{"cid": "1", "unlock_at": "2017-12-10T14:30Z", "owner": "rabery", "recipient": "beavet",
-                                           "title": "Winter Surprise"},
-                                          {"cid": "2", "unlock_at": "2017-12-10T14:30Z", "owner": "beavet", "recipient": "rabery",
-                                           "title": "Anniversary"}
+        return JsonResponse({"capsules": [{"cid": "1", "unlock_at": "2017-12-10T14:30Z", "owner": "rabery",
+                                           "recipient": "beavet", "title": "Winter Surprise"},
+                                          {"cid": "2", "unlock_at": "2017-12-10T14:30Z", "owner": "beavet",
+                                           "recipient": "rabery", "title": "Anniversary"},
+                                          {"cid": "3", "unlock_at": "2017-11-2T14:30Z", "owner": "beavet",
+                                           "recipient": "rabery", "title": "Software Engineering"}
                                           ]
                              },
                             status=200
@@ -27,7 +29,8 @@ def specific_capsule(request, cid):
         return JsonResponse({"cid": "1", "unlock_at": "2017-12-10T14:30Z", "owner": "rabery", "recipient": "beavet",
                              "title": "Winter Surprise", "contributors": ["fennma", "delejo"],
                              "description": "A capsule that Ryan made for Ethan for being such a good ASWWU employee",
-                             "media": ["1", "2"], "letters": ["1", "3"], "comments": [{"owner": "rabery", "text": "test comment"}]},
+                             "media": ["1", "2"], "letters": ["1", "3"],
+                             "comments": [{"owner": "rabery", "text": "test comment"}]},
                             status=200
                             )
     else:
@@ -36,9 +39,7 @@ def specific_capsule(request, cid):
 
 @require_GET
 def get_media(request, cid, mid):
-    return JsonResponse({"cid": "1", "unlock_at": "2017-12-10T14:30Z", "owner": "rabery", "recipient": "beavet",
-                         "title": "Winter Surprise", "contributors": ["fennma", "delejo"],
-                         "description": "A capsule that Ryan made for Ethan for being such a good ASWWU employee"},
+    return JsonResponse({"owner": "rabery", "url": "http://lorempixel.com/400/400/cats/"},
                         status=200
                         )
 
