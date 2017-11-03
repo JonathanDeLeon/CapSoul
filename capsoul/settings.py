@@ -25,7 +25,7 @@ SECRET_KEY = 'cv%oioh0xw96#*4!yc^*ij&ozhsc14b+!bx_pi-8h)%66dfi2r'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.9.6.123', 'docker.cs.wallawalla.edu']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '10.9.6.123', 'docker.cs.wallawalla.edu']
 
 
 # Application definition
@@ -38,8 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'users.apps.UsersConfig',
     'capsules.apps.CapsulesConfig',
+    'corsheaders',
+    'login.apps.LoginConfig',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'capsoul.urls'
@@ -102,6 +107,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny'
+    )
+}
+
+# Override default user model
+AUTH_USER_MODEL = 'database.User'
+
+# Default login url to redirect to
+LOGIN_URL = '/login'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
@@ -121,3 +141,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# CORS Headers fix
+CORS_ORIGIN_ALLOW_ALL = True
