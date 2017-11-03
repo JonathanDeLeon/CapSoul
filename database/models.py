@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 
 # Create your models here.
@@ -23,17 +23,21 @@ class UserManager(BaseUserManager):
         return user
 
     def create_user(self, username, password=None, **extra_fields):
-        # extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
         return self._create_user(username, password, **extra_fields)
 
     def create_superuser(self, username, password, **extra_fields):
-        # extra_fields.setdefault('is_superuser', True)
-        # if extra_fields.get('is_superuser') is not True:
-        #     raise ValueError('Superuser must have is_superuser=True')
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True')
         return self._create_user(username, password, **extra_fields)
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     """
     User with the same behaviour as Django's default User
     Attributes inherited from superclass:
@@ -51,6 +55,7 @@ class User(AbstractBaseUser):
     location = models.TextField()
     date_joined = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
 
     # Requirements for custom user
     USERNAME_FIELD = 'username'
