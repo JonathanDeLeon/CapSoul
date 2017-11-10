@@ -49,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length = 30)
     last_name = models.CharField(max_length = 30)
     date_of_birth = models.DateField(null=True, blank=True)
-    photo = models.FileField()
+    photo = models.ImageField(blank=True)
     email = models.EmailField()
     phone = models.IntegerField(null=True, blank=True)
     location = models.TextField()
@@ -82,11 +82,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Capsule(models.Model):
     cid = models.AutoField(primary_key = True)
     unlocks_at = models.DateTimeField()
-    owner = models.ForeignKey(User, on_delete=models.CASCADE,related_name='+')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
     contributors = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
     recipients = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
     title = models.TextField()
     description = models.TextField()
+    letter = models.FileField(blank=True)
+    media = models.FileField(blank=True)
 
     def __str__(self):
         return self.title
