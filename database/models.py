@@ -8,6 +8,10 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 
+
+def _upload_path(instance,filename):
+    return instance.get_upload_path(filename)
+
 # Create your models here.
 class UserManager(BaseUserManager):
     """
@@ -49,7 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length = 30)
     last_name = models.CharField(max_length = 30)
     date_of_birth = models.DateField(null=True, blank=True)
-    photo = models.ImageField(blank=True)
+    photo = models.ImageField(blank=True, upload_to=_upload_path)
     email = models.EmailField()
     phone = models.IntegerField(null=True, blank=True)
     location = models.TextField()
@@ -62,6 +66,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    def get_upload_path(self,filename):
+        return "profile_pic/"+str(self.username)+"/"+filename
 
     def __str__(self):
         return self.username
@@ -78,7 +85,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Send an email to this User."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
-
 class Capsule(models.Model):
     cid = models.AutoField(primary_key = True)
     unlocks_at = models.DateTimeField()
@@ -87,8 +93,11 @@ class Capsule(models.Model):
     recipients = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
     title = models.TextField()
     description = models.TextField()
-    letter = models.FileField(blank=True)
-    media = models.FileField(blank=True)
+    letter = models.FileField(blank=True, upload_to=_upload_path)
+    media = models.FileField(blank=True, upload_to=_upload_path)
 
     def __str__(self):
         return self.title
+
+    def get_upload_path(self,filename):
+        return "capsules/"+str(self.cid)+"/"+filename
