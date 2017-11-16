@@ -93,6 +93,7 @@ class Capsule(models.Model):
     recipients = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
     title = models.TextField()
     description = models.TextField()
+    
     letter = models.FileField(blank=True, upload_to=_upload_path)
     media = models.FileField(blank=True, upload_to=_upload_path)
 

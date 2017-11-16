@@ -24,9 +24,9 @@ from login import views as login
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^token-auth/', rest_authtoken.obtain_auth_token),
-    url(r'^login/', login.login),
+    url(r'^login/', login.ajax_login),
     url(r'^register/', login.register),
-    url(r'^logout/', login.logout),
+    url(r'^logout/', login.ajax_logout),
     url(r'^users/', include('users.urls')),
     url(r'^capsules/', include('capsules.urls')),
     url(r'^users', users.views.all_users),
