@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
+
+from rest_framework.authtoken.models import Token
 
 # Create your models here.
 class UserManager(BaseUserManager):
@@ -78,6 +81,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Send an email to this User."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+lifespan = timedelta(7)
+class ExpiringToken(Token):
+    """Extend Token to add an expired method"""
+    class Meta(object):
+        """This model is treated as a proxy model"""
+        proxy = True
+
+    def expired(self):
+        now = timezone.now()
+        if self.created < now - lifespan:
+            return True
+        return False
 
 class Capsule(models.Model):
     cid = models.AutoField(primary_key = True)

@@ -18,12 +18,11 @@ from django.contrib import admin
 import users
 import capsules
 
-from rest_framework.authtoken import views as rest_authtoken
 from login import views as login
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^token-auth/', rest_authtoken.obtain_auth_token),
+    url(r'^token-auth/', login.obtain_expiring_auth_token),
     url(r'^login/', login.ajax_login),
     url(r'^register/', login.register),
     url(r'^logout/', login.ajax_logout),
