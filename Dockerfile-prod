@@ -22,4 +22,4 @@ EXPOSE 8000
 
 # Specify the command to run when the image is run.
 # CMD python /code/manage.py runserver 0.0.0.0:8000
-CMD uwsgi --http=127.0.0.1:42000 --chdir /code/capsoul-backend --wsgi-file capsoul/wsgi.py --master --processes 4 --threads 2
+CMD uwsgi --http=0.0.0.0:8000 --chdir /code --wsgi-file capsoul/wsgi.py --master --processes 4 --threads 2
