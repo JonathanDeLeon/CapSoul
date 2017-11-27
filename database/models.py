@@ -68,7 +68,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def get_upload_path(self,filename):
-        return "profile_pic/"+str(self.username)+"/"+filename
+        filename = str(self.username)
+        return "media/"+filename
 
     def __str__(self):
         return self.username
@@ -85,20 +86,43 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Send an email to this User."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
-class Capsule(models.Model):
-    cid = models.AutoField(primary_key=True)
-    unlocks_at = models.DateTimeField()
-    owner = models.ForeignKey(User, related_name="owner")
-    contributors = models.ManyToManyField(User, related_name="contributors")
-    recipients = models.ManyToManyField(User, related_name="recipients")
-    title = models.TextField()
-    description = models.TextField()
-    
-    letter = models.FileField(blank=True, upload_to=_upload_path)
-    media = models.FileField(blank=True, upload_to=_upload_path)
 
+class Media(models.Model):
+    title = models.CharField(default='',max_length=255)
+    mid = models.AutoField(primary_key=True)
+    location = models.FileField(blank=True, upload_to=_upload_path)
+    cid = models.ForeignKey('Capsule', on_delete=models.CASCADE, related_name='+')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    
     def __str__(self):
         return self.title
 
     def get_upload_path(self,filename):
-        return "capsules/"+str(self.cid)+"/"+filename
+        filename = str(self.mid)
+        return "media/"+filename
+
+
+class Letters(models.Model):
+    lid = models.AutoField(primary_key=True)
+    title = models.CharField(default='',max_length=255)
+    text = models.TextField(default='')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    cid = models.ForeignKey('Capsule', on_delete=models.CASCADE, related_name='+')
+
+    def __str__(self):
+        return self.title
+
+
+class Capsule(models.Model):
+    cid = models.AutoField(primary_key = True)
+    unlocks_at = models.DateTimeField()
+    owner = models.ForeignKey('User', on_delete=models.CASCADE, related_name='owner')
+    contributors = models.ForeignKey('User', related_name='contributors')
+    recipients = models.ForeignKey('User', related_name='recipients')
+    title = models.CharField(max_length=255)
+    description = models.TextField(default='')    
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='+')
+    letter = models.ForeignKey('Letters', on_delete=models.CASCADE, related_name='+')
+
+    def __str__(self):
+        return self.title

@@ -52,6 +52,7 @@ def specific_capsule(request, cid):
 
 @require_GET
 def get_media(request, cid, mid):
+    
     return JsonResponse({"owner": "rabery", "url": "http://lorempixel.com/400/400/cats/"},
                         status=200
                         )
