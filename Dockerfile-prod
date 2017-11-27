@@ -15,8 +15,8 @@ RUN pip install -U pip
 RUN pip install -Ur requirements.txt
 RUN pip install uwsgi
 
-RUN python /code/manage.py makemigrations
 RUN python /code/manage.py migrate
+RUN python /code/manage.py collectstatic --noinput
 
 EXPOSE 8000
 

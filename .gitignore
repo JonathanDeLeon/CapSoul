@@ -9,3 +9,4 @@
 *.jpg
 *.jpeg
 .vsCode/*
+static/*
