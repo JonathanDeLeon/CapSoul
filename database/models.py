@@ -121,8 +121,8 @@ class Capsule(models.Model):
     recipients = models.ManyToManyField('User', related_name='capsule_recipients')
     title = models.CharField(max_length=255)
     description = models.TextField(default='')    
-    media = models.ForeignKey('Media', related_name='media', blank=True)
-    letter = models.ForeignKey('Letters', related_name='letters', blank=True)
+    media = models.ManyToManyField('Media', related_name='media', blank=True)
+    letter = models.ManyToManyField('Letters', related_name='letters', blank=True)
 
     def __str__(self):
         return self.title
