@@ -91,8 +91,8 @@ class Media(models.Model):
     title = models.CharField(default='',max_length=255)
     mid = models.AutoField(primary_key=True)
     location = models.FileField(blank=True, upload_to=_upload_path)
-    cid = models.ForeignKey('Capsule', on_delete=models.CASCADE, related_name='+')
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_media')
+    owner = models.ForeignKey('User', related_name='media_owner')
     
     def __str__(self):
         return self.title
@@ -106,8 +106,8 @@ class Letters(models.Model):
     lid = models.AutoField(primary_key=True)
     title = models.CharField(default='',max_length=255)
     text = models.TextField(default='')
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
-    cid = models.ForeignKey('Capsule', on_delete=models.CASCADE, related_name='+')
+    owner = models.ForeignKey('User', related_name='letter_owner')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_letter')
 
     def __str__(self):
         return self.title
@@ -116,13 +116,13 @@ class Letters(models.Model):
 class Capsule(models.Model):
     cid = models.AutoField(primary_key = True)
     unlocks_at = models.DateTimeField()
-    owner = models.ForeignKey('User', on_delete=models.CASCADE, related_name='owner')
-    contributors = models.ForeignKey('User', related_name='contributors')
-    recipients = models.ForeignKey('User', related_name='recipients')
+    owner = models.ForeignKey('User', related_name='capsule_owner')
+    contributors = models.ManyToManyField('User', related_name='capsule_contributors')
+    recipients = models.ManyToManyField('User', related_name='capsule_recipients')
     title = models.CharField(max_length=255)
     description = models.TextField(default='')    
-    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='+')
-    letter = models.ForeignKey('Letters', on_delete=models.CASCADE, related_name='+')
+    media = models.ForeignKey('Media', related_name='media', blank=True)
+    letter = models.ForeignKey('Letters', related_name='letters', blank=True)
 
     def __str__(self):
         return self.title
