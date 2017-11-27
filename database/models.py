@@ -86,11 +86,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
 class Capsule(models.Model):
-    cid = models.AutoField(primary_key = True)
+    cid = models.AutoField(primary_key=True)
     unlocks_at = models.DateTimeField()
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
-    contributors = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
-    recipients = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='+')
+    owner = models.ForeignKey(User, related_name="owner")
+    contributors = models.ManyToManyField(User, related_name="contributors")
+    recipients = models.ManyToManyField(User, related_name="recipients")
     title = models.TextField()
     description = models.TextField()
     
