@@ -88,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Media(models.Model):
-    title = models.CharField(default='',max_length=255)
+    title = models.CharField(default='',max_length=255, blank=True)
     mid = models.AutoField(primary_key=True)
     location = models.FileField(blank=True, upload_to=_upload_path)
     cid = models.ForeignKey('Capsule', related_name='cid_of_media')
