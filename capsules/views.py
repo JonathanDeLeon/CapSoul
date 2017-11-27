@@ -6,7 +6,7 @@ import json
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
-from database.models import Capsule
+from database.models import Capsule, User
 
 
 @require_http_methods(["GET", "POST"])
@@ -16,10 +16,27 @@ def all_capsules(request):
         return JsonResponse({'capsules': list(all_capsules)}, status=200)
     else:
         fields = json.loads(request.body)
-        fields['owner'] = request.user.username
+        contributors = fields['contributors']
+        del fields['contributors']
+        recipients = fields['recipients']
+        del fields['recipients']
+        fields['owner'] = User.objects.get(username=request.user.username)
+
         capsule = Capsule(**fields)
         capsule.save()
-        return JsonResponse({"status": "resource created"}, status=200)
+
+        contribs = []
+        for contributor in contributors:
+            contribs.append(User.objects.get(username=contributor))
+        capsule.contributors = contribs
+
+        recips = []
+        for recipient in recipients:
+            recips.append(User.objects.get(username=recipient))
+        capsule.recipients = recips
+
+        capsule.save()
+        return JsonResponse({"status": "resource with id created", "cid": capsule.cid}, status=200)
 
 
 @require_http_methods(["GET", "POST"])
