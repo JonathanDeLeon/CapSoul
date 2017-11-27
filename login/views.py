@@ -5,8 +5,9 @@ import json
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.views.decorators.http import require_http_methods, require_POST
+from django.core import serializers
 
 from rest_framework.authtoken.models import Token
 
@@ -14,15 +15,16 @@ from rest_framework.authtoken.models import Token
 UserModel = get_user_model()
 
 # Create your views here.
-
 @require_POST
-def login(request, *args, **kwargs):
-    username = request.POST['username']
-    password = request.POST['password']
+def ajax_login(request, *args, **kwargs):
+    data = json.loads(request.body)
+    username = data['username']
+    password = data['password']
     user = authenticate(request, username=username, password=password)
     if user is not None:
+        login(request, user)
         token, created = Token.objects.get_or_create(user=user)
-        response = JsonResponse({'result':'success','token':token.key})
+        response = JsonResponse({'result':'success','token':token.key, 'user':serializers.serialize('json', user)})
         response.set_cookie('session', token.key)
     else:
         response =  JsonResponse({'result':'error'})
@@ -30,8 +32,9 @@ def login(request, *args, **kwargs):
 
 @require_POST
 def register(request):
-    username = request.POST['username']
-    password = request.POST['password']
+    data = json.loads(request.body)
+    username = data['username']
+    password = data['password']
     user = authenticate(request, username=username, password=password, is_active=True)
     if user is not None:
         response = JsonResponse({'result':'error', 'description':'User already exists'})
@@ -43,8 +46,8 @@ def register(request):
     return response
 
 @require_http_methods(["GET", "POST"])
-def logout(request):
+def ajax_logout(request):
+    logout(request)
     response = JsonResponse({'result':'Successfully logged out'})
     response.delete_cookie('session')
     return response
-
