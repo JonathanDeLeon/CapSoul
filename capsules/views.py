@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.core import serializers
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+import json
+
+from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
 from database.models import Capsule
@@ -12,9 +12,13 @@ from database.models import Capsule
 @require_http_methods(["GET", "POST"])
 def all_capsules(request):
     if request.method == 'GET':
-        all_capsules = Capsule.objects.all().values('title', 'description', 'recipients')
+        all_capsules = Capsule.objects.all().values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
         return JsonResponse({'capsules': list(all_capsules)}, status=200)
     else:
+        fields = json.loads(request.body)
+        fields['owner'] = request.user.username
+        capsule = Capsule(**fields)
+        capsule.save()
         return JsonResponse({"status": "resource created"}, status=200)
 
 
@@ -22,7 +26,9 @@ def all_capsules(request):
 def specific_capsule(request, cid):
     if request.method == "GET":
         capsule = Capsule.objects.filter(cid=cid).values()
-        return JsonResponse({'capsules': list(capsule)}, status=200)
+        if not capsule:
+            raise Http404("No capsule matches the given query.")
+        return JsonResponse(list(capsule)[0], status=200)
     else:
         return JsonResponse({"status": "resource created"}, status=200)
 
