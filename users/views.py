@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 import json
 
-from django.core import serializers
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET
 
 from database.models import User
@@ -17,7 +16,7 @@ def all_users(request):
         return JsonResponse({'users': list(all_users)}, status=200)
     else:
         fields = json.loads(request.body)
-        fields['username'] = request.user.user_name
+        fields['username'] = request.user.username
         current_user = User(**fields)
         current_user.save()
         return JsonResponse({"status": "resource created"}, status=200)
@@ -26,4 +25,6 @@ def all_users(request):
 @require_GET
 def specific_user(request, uname):
     user = User.objects.filter(username=uname).values()
-    return JsonResponse({'users': list(user)}, status=200)
+    if not user:
+        raise Http404("No user matches the given query.")
+    return JsonResponse(list(user)[0], status=200)
