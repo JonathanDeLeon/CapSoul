@@ -53,16 +53,19 @@ def specific_capsule(request, cid):
 @require_GET
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).values()
+    media.file = request.FILES['file']
     if not media:
         raise Http404("No media matches given query.")
-    return JsonResponse(list(mid)[0], status=200)
+    return JsonResponse(list(file)[0], status=200)
 
 @require_GET
 def get_letters(request, lid):
     letter = Letters.objects.filter(lid=lid).values()
+    letter.title = request.GET['title']
+    letter.text = request.GET['text']
     if not letter:
         raise Http404("No Letters match given query.")
-    return JsonResponse(list(lid)[0], status=200)
+    return JsonResponse(list(title)[0], list(text)[0], status=200)
 
 @require_POST
 def add_media(request, cid):

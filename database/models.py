@@ -93,7 +93,7 @@ class Media(models.Model):
     owner = models.ForeignKey('User', related_name='media_owner')
     
     def __str__(self):
-        return self.mid
+        return str(self.mid)
 
     def get_upload_path(self,filename):
         filename = str(self.mid)
