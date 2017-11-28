@@ -6,8 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.conf import settings
-
+#from django.conf import settings
 
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
@@ -89,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Media(models.Model):
     mid = models.AutoField(primary_key=True)
-    location = models.FileField(blank=True, upload_to=_upload_path)
+    file = models.FileField(blank=True, upload_to=_upload_path)
     cid = models.ForeignKey('Capsule', related_name='cid_of_media')
     owner = models.ForeignKey('User', related_name='media_owner')
     
@@ -122,6 +121,18 @@ class Capsule(models.Model):
     description = models.TextField(default='')    
     media = models.ManyToManyField('Media', related_name='media', blank=True)
     letter = models.ManyToManyField('Letters', related_name='letters', blank=True)
+    date_created = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+
+class Comments(models.Model):
+    comid = models.AutoField(primary_key=True)
+    title = models.CharField(default='',max_length=255)
+    text = models.TextField(default='')
+    owner = models.ForeignKey('User', related_name='comment_owner')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_comment')
 
     def __str__(self):
         return self.title

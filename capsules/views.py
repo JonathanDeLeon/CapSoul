@@ -6,7 +6,7 @@ import json
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
-from database.models import Capsule, User
+from database.models import Capsule, User, Media, Letters, Comments
 
 
 @require_http_methods(["GET", "POST"])
@@ -51,28 +51,48 @@ def specific_capsule(request, cid):
 
 
 @require_GET
-def get_media(request, cid, mid):
-    return JsonResponse({"owner": "rabery", "url": "http://lorempixel.com/400/400/cats/"},
-                        status=200
-                        )
-
+def get_media(request, mid):
+    media = Media.objects.filter(mid=mid).values()
+    if not media:
+        raise Http404("No media matches given query.")
+    return JsonResponse(list(mid)[0], status=200)
 
 @require_GET
-def get_letters(request, cid, lid):
-    return JsonResponse({"text": "Hey, I made this capsule for you! Hope you like it", "title": "Best Wishes",
-                         "owner": "rabery"})
-
+def get_letters(request, lid):
+    letter = Letters.objects.filter(lid=lid).values()
+    if not letter:
+        raise Http404("No Letters match given query.")
+    return JsonResponse(list(lid)[0], status=200)
 
 @require_POST
 def add_media(request, cid):
-    return JsonResponse({"status": "resource created"}, status=200)
-
+    capsule = Capsule.objects.filter(cid=cid).get()
+    owner = request.user
+    media = Media(owner=owner, cid=capsule)
+    media.save()
+    media.file = request.FILES['file']
+    media.save()
+    return JsonResponse({"status": "resource created", "mid": media.mid}, status=200)
 
 @require_POST
 def add_letters(request, cid):
-    return JsonResponse({"status": "resource created"}, status=200)
+    capsule = Capsule.objects.filter(cid=cid).get()
+    owner = request.user
+    letter = Letters(owner=owner, cid=capsule)
+    letter.save()
+    letter.title = request.POST['title']
+    letter.text = request.POST['text']
+    letter.save()
+    return JsonResponse({"status": "resource created", "lid": letter.lid}, status=200)
 
 
 @require_POST
 def add_comments(request, cid):
-    return JsonResponse({"status": "resource created"}, status=200)
+    capsule = Capsule.objects.filter(cid=cid).get()
+    owner = request.user
+    comment = Comments(owner=owner, cid=capsule)
+    comment.save()
+    comment.title = request.POST['title']
+    comment.text = request.POST['text']
+    comment.save()
+    return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
