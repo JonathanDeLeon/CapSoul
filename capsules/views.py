@@ -38,7 +38,7 @@ def all_capsules(request):
         capsule.recipients = recips
 
         capsule.save()
-        return JsonResponse({"status": "resource with id created", "cid": capsule.cid}, status=200)
+        return JsonResponse({"status": "resource created", "cid": capsule.cid}, status=200)
 
 
 @require_http_methods(["GET", "POST"])
@@ -75,14 +75,15 @@ def specific_capsule(request, cid):
         return JsonResponse(temp_list, status=200)
     else:
         capsule = Capsule.objects.get(cid=cid)
-        if capsule.owner.username != request.user.username:
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+        # if capsule.owner.username != request.user.username:
+        #     return JsonResponse({"status": "Not Authorized"}, status=401)
         fields = json.loads(request.body)
+        del(fields['owner'])
         contributors = fields['contributors']
         del fields['contributors']
         recipients = fields['recipients']
         del fields['recipients']
-        fields['owner'] = User.objects.get(username=request.user.username)
+        # fields['owner'] = User.objects.get(username=request.user.username)
 
         contribs = []
         for contributor in contributors:
@@ -95,9 +96,9 @@ def specific_capsule(request, cid):
         capsule.recipients = recips
 
         for field in fields:
-            capsule[field] = fields[field]
+            setattr(capsule, field, fields[field])
         capsule.save()
-        return JsonResponse({"status": "resource with id created", "cid": capsule.cid}, status=200)
+        return JsonResponse({"status": "resource modified", "cid": capsule.cid}, status=200)
 
 
 @require_GET
