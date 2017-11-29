@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 
 import json
 
+from datetime import datetime
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from pytz import utc
 
 from database.models import Capsule, User
 
@@ -42,12 +44,41 @@ def all_capsules(request):
 @require_http_methods(["GET", "POST"])
 def specific_capsule(request, cid):
     if request.method == "GET":
-        capsule = Capsule.objects.filter(cid=cid).values()
+        capsule = Capsule.objects.filter(cid=cid)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        return JsonResponse(list(capsule)[0], status=200)
+        if capsule.get().unlocks_at > utc.localize(datetime.now()) and\
+                capsule.get().owner.username != request.user.username and\
+                request.user.username not in capsule.get().contributors.values('username'):
+            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=401)
+        if request.user.username not in capsule.get().recipients.values('username'):
+            return JsonResponse({"status": "Not Authorized"}, status=401)
+        return JsonResponse(list(capsule.values())[0], status=200)
     else:
-        return JsonResponse({"status": "resource created"}, status=200)
+        capsule = Capsule.objects.get(cid=cid)
+        if capsule.owner.username != request.user.username:
+            return JsonResponse({"status": "Not Authorized"}, status=401)
+        fields = json.loads(request.body)
+        contributors = fields['contributors']
+        del fields['contributors']
+        recipients = fields['recipients']
+        del fields['recipients']
+        fields['owner'] = User.objects.get(username=request.user.username)
+
+        contribs = []
+        for contributor in contributors:
+            contribs.append(User.objects.get(username=contributor))
+        capsule.contributors = contribs
+
+        recips = []
+        for recipient in recipients:
+            recips.append(User.objects.get(username=recipient))
+        capsule.recipients = recips
+
+        for field in fields:
+            capsule[field] = fields[field]
+        capsule.save()
+        return JsonResponse({"status": "resource with id created", "cid": capsule.cid}, status=200)
 
 
 @require_GET
