@@ -7,12 +7,12 @@ from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-#from django.conf import settings
+from rest_framework.authtoken.models import Token
+
 
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
 
-from rest_framework.authtoken.models import Token
 
 # Create your models here.
 class UserManager(BaseUserManager):
@@ -51,9 +51,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         * last_login
         * is_superuser
     """
-    username = models.CharField(max_length = 30, primary_key = True, unique=True)
-    first_name = models.CharField(max_length = 30)
-    last_name = models.CharField(max_length = 30)
+    username = models.CharField(max_length=30, primary_key=True, unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
     date_of_birth = models.DateField(null=True, blank=True)
     photo = models.ImageField(blank=True, upload_to=_upload_path)
     email = models.EmailField()
@@ -69,7 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    def get_upload_path(self,filename):
+    def get_upload_path(self, filename):
         filename = str(self.username)
         return "media/"+filename
 
@@ -88,6 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Send an email to this User."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+
 lifespan = timedelta(7)
 class ExpiringToken(Token):
     """Extend Token to add an expired method"""
@@ -101,6 +102,7 @@ class ExpiringToken(Token):
             return True
         return False
 
+
 class Media(models.Model):
     mid = models.AutoField(primary_key=True)
     file = models.FileField(upload_to=_upload_path)
@@ -110,14 +112,14 @@ class Media(models.Model):
     def __str__(self):
         return str(self.mid)
 
-    def get_upload_path(self,filename):
+    def get_upload_path(self, filename):
         filename = str(self.mid)
         return "media/"+filename
 
 
 class Letters(models.Model):
     lid = models.AutoField(primary_key=True)
-    title = models.CharField(default='',max_length=255)
+    title = models.CharField(default='', max_length=255)
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='letter_owner')
     cid = models.ForeignKey('Capsule', related_name='cid_of_letter')
@@ -127,7 +129,7 @@ class Letters(models.Model):
 
 
 class Capsule(models.Model):
-    cid = models.AutoField(primary_key = True)
+    cid = models.AutoField(primary_key=True)
     unlocks_at = models.DateTimeField()
     owner = models.ForeignKey('User', related_name='capsule_owner')
     contributors = models.ManyToManyField('User', related_name='capsule_contributors')
@@ -144,7 +146,7 @@ class Capsule(models.Model):
 
 class Comments(models.Model):
     comid = models.AutoField(primary_key=True)
-    title = models.CharField(default='',max_length=255)
+    title = models.CharField(default='', max_length=255)
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='comment_owner')
     cid = models.ForeignKey('Capsule', related_name='cid_of_comment')
