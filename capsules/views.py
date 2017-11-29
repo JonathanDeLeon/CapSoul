@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
 from database.models import Capsule, User, Media, Letters, Comments
@@ -52,24 +52,25 @@ def specific_capsule(request, cid):
 
 @require_GET
 def get_media(request, mid):
-    media = Media.objects.filter(mid=mid).values()
-    media.file = request.FILES['file']
+    media = Media.objects.filter(mid=mid).get()
     if not media:
         raise Http404("No media matches given query.")
-    return JsonResponse(list(file)[0], status=200)
+    filename = media.file.name.split('/')[-1]
+    response = HttpResponse(media.file,content_type='image/*')
+    response['Content-Dsiposition'] = 'attatchment; filename=%s' % filename
+    return response
 
 @require_GET
 def get_letters(request, lid):
-    letter = Letters.objects.filter(lid=lid).values()
-    letter.title = request.GET['title']
-    letter.text = request.GET['text']
+    letter = Letters.objects.filter(lid=lid).values('title','text','lid','owner')
     if not letter:
         raise Http404("No Letters match given query.")
-    return JsonResponse(list(title)[0], list(text)[0], status=200)
+    return JsonResponse(list(letter)[0], status=200)
 
 @require_POST
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
+    #owner = User.objects.filter(username='test').get()
     owner = request.user
     media = Media(owner=owner, cid=capsule)
     media.save()
@@ -80,6 +81,7 @@ def add_media(request, cid):
 @require_POST
 def add_letters(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
+    #owner = User.objects.filter(username='test').get()
     owner = request.user
     letter = Letters(owner=owner, cid=capsule)
     letter.save()
@@ -92,6 +94,7 @@ def add_letters(request, cid):
 @require_POST
 def add_comments(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
+    #owner = User.objects.filter(username='test').get()
     owner = request.user
     comment = Comments(owner=owner, cid=capsule)
     comment.save()

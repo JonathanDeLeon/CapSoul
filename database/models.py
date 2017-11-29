@@ -88,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Media(models.Model):
     mid = models.AutoField(primary_key=True)
-    file = models.FileField(blank=True, upload_to=_upload_path)
+    file = models.FileField(upload_to=_upload_path)
     cid = models.ForeignKey('Capsule', related_name='cid_of_media')
     owner = models.ForeignKey('User', related_name='media_owner')
     
@@ -108,7 +108,7 @@ class Letters(models.Model):
     cid = models.ForeignKey('Capsule', related_name='cid_of_letter')
 
     def __str__(self):
-        return self.title
+        return str(self.lid)
 
 
 class Capsule(models.Model):
@@ -124,7 +124,7 @@ class Capsule(models.Model):
     date_created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return str(self.cid)
 
 
 class Comments(models.Model):
@@ -135,4 +135,4 @@ class Comments(models.Model):
     cid = models.ForeignKey('Capsule', related_name='cid_of_comment')
 
     def __str__(self):
-        return self.title
+        return str(self.comid)
