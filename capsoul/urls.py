@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^token-auth/', login.obtain_expiring_auth_token),
     url(r'^login/', login.ajax_login),
     url(r'^register/', login.register),
+    url(r'^verify/', login.verify),
     url(r'^logout/', login.ajax_logout),
     url(r'^users/', include('users.urls')),
     url(r'^capsules/', include('capsules.urls')),
