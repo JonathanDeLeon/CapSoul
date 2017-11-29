@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^register/', login.register),
     url(r'^verify/', login.verify),
     url(r'^logout/', login.ajax_logout),
+    url(r'^auth-error/', login.auth_error),
     url(r'^users/', include('users.urls')),
     url(r'^capsules/', include('capsules.urls')),
     url(r'^users', users.views.all_users),

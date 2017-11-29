@@ -3,22 +3,21 @@ from __future__ import unicode_literals
 
 import json
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.core import serializers
 
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
 
-# Get the User Model
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from database.models import ExpiringToken
 
+# Get the User Model
 UserModel = get_user_model()
 
 # Create your views here.
@@ -28,13 +27,12 @@ def ajax_login(request, *args, **kwargs):
     username = data['username']
     password = data['password']
     user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        token, created = ExpiringToken.objects.get_or_create(user=user)
-        response = JsonResponse({'result':'success','token':token.key, 'user':json.loads(serializers.serialize('json', [user, ]))})
-        response.set_cookie('session', token.key)
-    else:
-        response =  JsonResponse({'result':'error'})
+    if user is None:
+        raise Http404('No user matches the given query')
+    login(request, user)
+    token, created = ExpiringToken.objects.get_or_create(user=user)
+    response = JsonResponse({'status':'login successful','token':token.key, 'user':json.loads(serializers.serialize('json', [user, ]))}, status=200)
+    response.set_cookie('session', token.key)
     return response
 
 @require_POST
@@ -44,31 +42,35 @@ def register(request):
     password = data['password']
     user = authenticate(request, username=username, password=password, is_active=True)
     if user is not None:
-        response = JsonResponse({'result':'error', 'description':'User already exists'})
-    else:
-        user = UserModel.objects.create_user(username, password)
-        token, created = ExpiringToken.objects.get_or_create(user=user)
-        response = JsonResponse({'result':'success','description':'User has been created','token':token.key})
-        response.set_cookie('token_session', token.key)
+        raise Http404('User already exists')
+    user = UserModel.objects.create_user(username, password)
+    token, created = ExpiringToken.objects.get_or_create(user=user)
+    response = JsonResponse({'status':'User has been successfully created','token':token.key}, status=200)
+    response.set_cookie('token_session', token.key)
     return response
 
 @require_http_methods(["GET", "POST"])
+@login_required(login_url='/auth-error/')
 def ajax_logout(request):
     logout(request)
-    response = JsonResponse({'result':'Successfully logged out'})
+    response = JsonResponse({'status':'Successfully logged out'})
     response.delete_cookie('token_session')
     return response
 
 @require_GET
+@login_required(login_url='/auth-error/')
 def verify(request):
     cookie = request.COOKIES.get('token_session')
-    if cookie:
-        # token, _ = ExpiringToken.objects.get_or_create(token=cookie)
-        user = ExpiringToken.objects.get(key=cookie).user
-        response = JsonResponse({'result':'success','user':json.loads(serializers.serialize('json', [user, ]))})
-    else:
-        response =  JsonResponse({'result':'error'})
+    if cookie is None:
+        raise Http404('Invalid token')
+    # token, _ = ExpiringToken.objects.get_or_create(token=cookie)
+    user = ExpiringToken.objects.get(key=cookie).user
+    response = JsonResponse({'status':'token is verified','user':json.loads(serializers.serialize('json', [user, ]))}, status=200)
     return response
+
+@require_http_methods(["GET", "POST"])
+def auth_error(request):
+    raise Http404('User not authenticated. Login required.')
 
 class ObtainExpiringAuthToken(ObtainAuthToken):
     """View enabling username/password exchange for expiring token"""
