@@ -106,7 +106,7 @@ class ExpiringToken(Token):
 class Media(models.Model):
     mid = models.AutoField(primary_key=True)
     file = models.FileField(upload_to=_upload_path)
-    cid = models.ForeignKey('Capsule', related_name='cid_of_media')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_media', null = True)
     owner = models.ForeignKey('User', related_name='media_owner')
     
     def __str__(self):

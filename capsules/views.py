@@ -7,9 +7,8 @@ from datetime import datetime
 from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from pytz import utc
-
+import os, capsoul.settings
 from database.models import Capsule, User, Media, Letters, Comments
-
 
 @require_http_methods(["GET", "POST"])
 def all_capsules(request):
@@ -60,6 +59,9 @@ def specific_capsule(request, cid):
         all_media = []
         for m in media:
             all_media.append(m.mid)
+            media_dir = capsoul.settings.MEDIA_ROOT+'media/'+str(m.mid)
+            if os.path.exists(media_dir) is False:
+                del all_media[-1]
         temp_list = list(capsule.values())[0]
         temp_list['media'] = all_media
 
