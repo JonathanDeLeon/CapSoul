@@ -6,3 +6,7 @@
 *.xml
 *.iml
 *.sqlite3
+*.jpg
+*.jpeg
+.vsCode/*
+static/*
