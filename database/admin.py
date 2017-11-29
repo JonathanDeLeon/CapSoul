@@ -2,8 +2,11 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from .models import User, Capsule
+from .models import User, Capsule, Media, Letters, Comments
 
 # Register your models here.
 admin.site.register(User)
 admin.site.register(Capsule)
+admin.site.register(Media)
+admin.site.register(Letters)
+admin.site.register(Comments)

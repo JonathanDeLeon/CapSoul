@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'rest_framework.authtoken',
+
     'users.apps.UsersConfig',
     'capsules.apps.CapsulesConfig',
     'corsheaders',
@@ -109,7 +111,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        #'rest_framework.authentication.TokenAuthentication',
+        'login.authentication.ExpiringTokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated'
@@ -131,7 +134,7 @@ LOGIN_URL = '/login'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Los_Angeles'
 
 USE_I18N = True
 
@@ -146,11 +149,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-ROOT_MEDIA = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
-
 # CORS Headers fix
 CORS_ORIGIN_ALLOW_ALL = True
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_URL = '/files/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'files/')

@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.conf import settings
+from rest_framework.authtoken.models import Token
 
 
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
+
 
 # Create your models here.
 class UserManager(BaseUserManager):
@@ -49,9 +51,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         * last_login
         * is_superuser
     """
-    username = models.CharField(max_length = 30, primary_key = True, unique=True)
-    first_name = models.CharField(max_length = 30)
-    last_name = models.CharField(max_length = 30)
+    username = models.CharField(max_length=30, primary_key=True, unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
     date_of_birth = models.DateField(null=True, blank=True)
     photo = models.ImageField(blank=True, upload_to=_upload_path)
     email = models.EmailField()
@@ -67,8 +69,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    def get_upload_path(self,filename):
-        return "profile_pic/"+str(self.username)+"/"+filename
+    def get_upload_path(self, filename):
+        filename = str(self.username)
+        return "media/"+filename
 
     def __str__(self):
         return self.username
@@ -85,20 +88,68 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Send an email to this User."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+
+lifespan = timedelta(7)
+class ExpiringToken(Token):
+    """Extend Token to add an expired method"""
+    class Meta(object):
+        """This model is treated as a proxy model"""
+        proxy = True
+
+    def expired(self):
+        now = timezone.now()
+        if self.created < now - lifespan:
+            return True
+        return False
+
+
+class Media(models.Model):
+    mid = models.AutoField(primary_key=True)
+    file = models.FileField(upload_to=_upload_path)
+    cid = models.ForeignKey('Capsule', related_name='cid_of_media')
+    owner = models.ForeignKey('User', related_name='media_owner')
+    
+    def __str__(self):
+        return str(self.mid)
+
+    def get_upload_path(self, filename):
+        filename = str(self.mid)
+        return "media/"+filename
+
+
+class Letters(models.Model):
+    lid = models.AutoField(primary_key=True)
+    title = models.CharField(default='', max_length=255)
+    text = models.TextField(default='')
+    owner = models.ForeignKey('User', related_name='letter_owner')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_letter')
+
+    def __str__(self):
+        return str(self.lid)
+
+
 class Capsule(models.Model):
     cid = models.AutoField(primary_key=True)
     unlocks_at = models.DateTimeField()
-    owner = models.ForeignKey(User, related_name="owner")
-    contributors = models.ManyToManyField(User, related_name="contributors")
-    recipients = models.ManyToManyField(User, related_name="recipients")
-    title = models.TextField()
-    description = models.TextField()
-    
-    letter = models.FileField(blank=True, upload_to=_upload_path)
-    media = models.FileField(blank=True, upload_to=_upload_path)
+    owner = models.ForeignKey('User', related_name='capsule_owner')
+    contributors = models.ManyToManyField('User', related_name='capsule_contributors')
+    recipients = models.ManyToManyField('User', related_name='capsule_recipients')
+    title = models.CharField(max_length=255)
+    description = models.TextField(default='')    
+    media = models.ManyToManyField('Media', related_name='media', blank=True)
+    letter = models.ManyToManyField('Letters', related_name='letters', blank=True)
+    date_created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return str(self.cid)
 
-    def get_upload_path(self,filename):
-        return "capsules/"+str(self.cid)+"/"+filename
+
+class Comments(models.Model):
+    comid = models.AutoField(primary_key=True)
+    title = models.CharField(default='', max_length=255)
+    text = models.TextField(default='')
+    owner = models.ForeignKey('User', related_name='comment_owner')
+    cid = models.ForeignKey('Capsule', related_name='cid_of_comment')
+
+    def __str__(self):
+        return str(self.comid)
