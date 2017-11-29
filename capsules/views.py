@@ -75,15 +75,15 @@ def specific_capsule(request, cid):
         return JsonResponse(temp_list, status=200)
     else:
         capsule = Capsule.objects.get(cid=cid)
-        # if capsule.owner.username != request.user.username:
-        #     return JsonResponse({"status": "Not Authorized"}, status=401)
+        if capsule.owner.username != request.user.username:
+            return JsonResponse({"status": "Not Authorized"}, status=401)
         fields = json.loads(request.body)
         del(fields['owner'])
         contributors = fields['contributors']
         del fields['contributors']
         recipients = fields['recipients']
         del fields['recipients']
-        # fields['owner'] = User.objects.get(username=request.user.username)
+        fields['owner'] = User.objects.get(username=request.user.username)
 
         contribs = []
         for contributor in contributors:
