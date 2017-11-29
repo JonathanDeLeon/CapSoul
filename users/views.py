@@ -29,5 +29,5 @@ def all_users(request):
 def specific_user(request, uname):
     user = User.objects.filter(username=uname).values()
     if not user:
-        return Response({"status": "No user matches the given query.", status=404)
+        return Response({"status": "No user matches the given query."}, status=404)
     return JsonResponse(list(user)[0], status=200)

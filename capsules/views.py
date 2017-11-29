@@ -3,9 +3,8 @@ from __future__ import unicode_literals
 
 import json
 
-from django.contrib.auth.decorators import login_required
 from datetime import datetime
-from django.http import JsonResponse, Http404, HttpResponse
+from django.http import JsonResponse, HttpResponse
 from pytz import utc
 
 from rest_framework.decorators import api_view
@@ -49,7 +48,7 @@ def specific_capsule(request, cid):
     if request.method == "GET":
         capsule = Capsule.objects.filter(cid=cid)
         if not capsule:
-            return Response({"status": "No capsule matches the given query.", status=404)
+            return Response({"status": "No capsule matches the given query."}, status=404)
         if capsule.get().unlocks_at > utc.localize(datetime.now()) and\
                 capsule.get().owner.username != request.user.username and\
                 request.user.username not in capsule.get().contributors.values('username'):
@@ -108,7 +107,7 @@ def specific_capsule(request, cid):
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).get()
     if not media:
-        return Response({"status": "No media matches given query.", status=404)
+        return Response({"status": "No media matches given query."}, status=404)
     filename = media.file.name.split('/')[-1]
     response = HttpResponse(media.file, content_type='image/*')
     response['Content-Disposition'] = 'attatchment; filename=%s' % filename
@@ -118,7 +117,7 @@ def get_media(request, mid):
 def get_letters(request, lid):
     letter = Letters.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner')
     if not letter:
-        return Response({"status": "No Letters match given query.", status=404)
+        return Response({"status": "No Letters match given query."}, status=404)
     return JsonResponse(list(letter)[0], status=200)
 
 @api_view(['POST'])
