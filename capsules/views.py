@@ -11,7 +11,7 @@ from database.models import Capsule, User, Media, Letters, Comments
 
 
 @require_http_methods(["GET", "POST"])
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def all_capsules(request):
     if request.method == 'GET':
         all_capsules = Capsule.objects.all().values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
@@ -42,7 +42,7 @@ def all_capsules(request):
 
 
 @require_http_methods(["GET", "POST"])
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def specific_capsule(request, cid):
     if request.method == "GET":
         capsule = Capsule.objects.filter(cid=cid).values()
@@ -54,7 +54,7 @@ def specific_capsule(request, cid):
 
 
 @require_GET
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).get()
     if not media:
@@ -65,7 +65,7 @@ def get_media(request, mid):
     return response
 
 @require_GET
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def get_letters(request, lid):
     letter = Letters.objects.filter(lid=lid).values('title','text','lid','owner')
     if not letter:
@@ -73,7 +73,7 @@ def get_letters(request, lid):
     return JsonResponse(list(letter)[0], status=200)
 
 @require_POST
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
     #owner = User.objects.filter(username='test').get()
@@ -85,7 +85,7 @@ def add_media(request, cid):
     return JsonResponse({"status": "resource created", "mid": media.mid}, status=200)
 
 @require_POST
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def add_letters(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
     #owner = User.objects.filter(username='test').get()
@@ -99,7 +99,7 @@ def add_letters(request, cid):
 
 
 @require_POST
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def add_comments(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
     #owner = User.objects.filter(username='test').get()

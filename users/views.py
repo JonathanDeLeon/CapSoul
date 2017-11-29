@@ -11,7 +11,7 @@ from database.models import User
 
 
 @require_http_methods(["GET", "POST"])
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def all_users(request):
     if request.method == 'GET':
         all_users = User.objects.all().values('username', 'first_name', 'last_name')
@@ -25,7 +25,7 @@ def all_users(request):
 
 
 @require_GET
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def specific_user(request, uname):
     user = User.objects.filter(username=uname).values()
     if not user:

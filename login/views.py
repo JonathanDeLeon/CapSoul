@@ -50,7 +50,7 @@ def register(request):
     return response
 
 @require_http_methods(["GET", "POST"])
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def ajax_logout(request):
     logout(request)
     response = JsonResponse({'status':'Successfully logged out'})
@@ -58,7 +58,7 @@ def ajax_logout(request):
     return response
 
 @require_GET
-@login_required(login_url='/auth-error/')
+# @login_required(login_url='/auth-error/')
 def verify(request):
     cookie = request.COOKIES.get('token_session')
     if cookie is None:
