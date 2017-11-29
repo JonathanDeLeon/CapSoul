@@ -106,13 +106,13 @@ def get_media(request, mid):
     if not media:
         raise Http404("No media matches given query.")
     filename = media.file.name.split('/')[-1]
-    response = HttpResponse(media.file,content_type='image/*')
-    response['Content-Dsiposition'] = 'attatchment; filename=%s' % filename
+    response = HttpResponse(media.file, content_type='image/*')
+    response['Content-Disposition'] = 'attatchment; filename=%s' % filename
     return response
 
 @require_GET
 def get_letters(request, lid):
-    letter = Letters.objects.filter(lid=lid).values('title','text','lid','owner')
+    letter = Letters.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner')
     if not letter:
         raise Http404("No Letters match given query.")
     return JsonResponse(list(letter)[0], status=200)
@@ -120,18 +120,17 @@ def get_letters(request, lid):
 @require_POST
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
-    owner = User.objects.filter(username='beavet').get()
-    # owner = request.user
+    owner = request.user
     media = Media(owner=owner, cid=capsule)
     media.save()
     media.file = request.FILES['file']
     media.save()
     return JsonResponse({"status": "resource created", "mid": media.mid}, status=200)
 
+
 @require_POST
 def add_letters(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
-    #owner = User.objects.filter(username='test').get()
     owner = request.user
     letter = Letters(owner=owner, cid=capsule)
     letter.save()
@@ -144,7 +143,6 @@ def add_letters(request, cid):
 @require_POST
 def add_comments(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
-    #owner = User.objects.filter(username='test').get()
     owner = request.user
     comment = Comments(owner=owner, cid=capsule)
     comment.save()
