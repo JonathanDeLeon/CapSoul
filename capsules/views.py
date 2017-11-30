@@ -10,6 +10,7 @@ from pytz import utc
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+import os, capsoul.settings
 from database.models import Capsule, User, Media, Letters, Comments
 
 
@@ -62,6 +63,9 @@ def specific_capsule(request, cid):
         all_media = []
         for m in media:
             all_media.append(m.mid)
+            media_dir = capsoul.settings.MEDIA_ROOT+'media/'+str(m.mid)
+            if os.path.exists(media_dir) is False:
+                del all_media[-1]
         temp_list = list(capsule.values())[0]
         temp_list['media'] = all_media
 
