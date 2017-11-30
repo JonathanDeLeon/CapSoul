@@ -1,14 +1,22 @@
-
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from rest_framework.authtoken.models import Token
-
+import capsoul.settings
+from django.db.models import signals
+from capsoul.tasks import send_welcome_email
+ 
+ 
+def user_post_save(sender, instance, signal, *args, **kwargs):
+    if not instance.is_verified:
+        # Send welcome email
+        send_welcome_email.delay(instance.username)
+ 
+signals.post_save.connect(user_post_save, sender=capsoul.settings.AUTH_USER_MODEL)
 
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
@@ -62,6 +70,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField('verified', default=False)
 
     # Requirements for custom user
     USERNAME_FIELD = 'username'
