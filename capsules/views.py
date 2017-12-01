@@ -70,13 +70,22 @@ def specific_capsule(request, cid):
         temp_list['media'] = all_media
 
         try:
-            letters = Letters.objects.filter(cid=capsule.get()).get()
+            letters = Letters.objects.filter(cid=capsule.get()).values('lid')
         except:
             letters = []
         all_letters = []
         for l in letters:
-            all_letters.append(l.lid)
+            all_letters.append(l["lid"])
         temp_list['letters'] = all_letters
+
+        try:
+            comments = Comments.objects.filter(cid=capsule.get()).values('title', 'text', 'owner', 'comid', 'owner')
+        except:
+            comments = []
+        all_comments = []
+        for c in comments:
+            all_comments.append(c)
+        temp_list['comments'] = all_comments
 
         return JsonResponse(temp_list, status=200)
     else:
@@ -137,23 +146,19 @@ def add_media(request, cid):
 
 @api_view(['POST'])
 def add_letters(request, cid):
-    capsule = Capsule.objects.filter(cid=cid).get()
-    owner = request.user
-    letter = Letters(owner=owner, cid=capsule)
-    letter.save()
-    letter.title = request.POST['title']
-    letter.text = request.POST['text']
+    fields = json.loads(request.body)
+    fields['cid'] = Capsule.objects.filter(cid=cid).get()
+    fields['owner'] = request.user
+    letter = Letters(**fields)
     letter.save()
     return JsonResponse({"status": "resource created", "lid": letter.lid}, status=200)
 
 
 @api_view(['POST'])
 def add_comments(request, cid):
-    capsule = Capsule.objects.filter(cid=cid).get()
-    owner = request.user
-    comment = Comments(owner=owner, cid=capsule)
-    comment.save()
-    comment.title = request.POST['title']
-    comment.text = request.POST['text']
+    fields = json.loads(request.body)
+    fields['owner'] = request.user
+    fields['cid'] = Capsule.objects.filter(cid=cid).get()
+    comment = Comments(**fields)
     comment.save()
     return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
