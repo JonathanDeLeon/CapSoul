@@ -3,16 +3,18 @@ from __future__ import unicode_literals
 
 import json
 
-from django.contrib.auth.decorators import login_required
 from datetime import datetime
-from django.http import JsonResponse, Http404, HttpResponse
-from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from django.http import JsonResponse, HttpResponse, Http404
 from pytz import utc
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 import os, capsoul.settings
 from database.models import Capsule, User, Media, Letters, Comments
 
-@require_http_methods(["GET", "POST"])
-# @login_required(login_url='/auth-error/')
+
+@api_view(['GET', 'POST'])
 def all_capsules(request):
     if request.method == 'GET':
         all_capsules = Capsule.objects.all().values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
@@ -39,17 +41,15 @@ def all_capsules(request):
         capsule.recipients = recips
 
         capsule.save()
-        return JsonResponse({"status": "resource created", "cid": capsule.cid}, status=200)
+        return Response({"status": "resource created", "cid": capsule.cid}, status=200)
 
 
-@require_http_methods(["GET", "POST"])
-# @login_required(login_url='/auth-error/')
+@api_view(['GET', 'POST'])
 def specific_capsule(request, cid):
     if request.method == "GET":
         capsule = Capsule.objects.filter(cid=cid)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-
         authorized = check_authorized(cid, request.user.username, 'view')
         if isinstance(authorized, JsonResponse):
             return authorized
@@ -116,23 +116,21 @@ def specific_capsule(request, cid):
         return JsonResponse({"status": "resource modified", "cid": capsule.cid}, status=200)
 
 
-@require_GET
-# @login_required(login_url='/auth-error/')
+@api_view(['GET'])
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).get()
     authorized = check_authorized(media.cid.cid, request.user.username, 'view')
     if isinstance(authorized, JsonResponse):
         return authorized
     if not media:
-        raise Http404("No media matches given query.")
+        return Response({"status": "No media matches given query."}, status=404)
     filename = media.file.name.split('/')[-1]
     response = HttpResponse(media.file, content_type='image/*')
     response['Content-Disposition'] = 'attatchment; filename=%s' % filename
     return response
 
 
-@require_GET
-# @login_required(login_url='/auth-error/')
+@api_view(['GET'])
 def get_letters(request, lid):
     letter = Letters.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner', 'cid')
     authorized = check_authorized(letter['cid'], request.user.username, 'view')
@@ -140,12 +138,11 @@ def get_letters(request, lid):
         return authorized
     del letter['cid']
     if not letter:
-        raise Http404("No Letters match given query.")
+        return Response({"status": "No Letters match given query."}, status=404)
     return JsonResponse(list(letter)[0], status=200)
 
 
-@require_POST
-# @login_required(login_url='/auth-error/')
+@api_view(['POST'])
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
     authorized = check_authorized(cid, request.user.username, 'add')
@@ -159,8 +156,7 @@ def add_media(request, cid):
     return JsonResponse({"status": "resource created", "mid": media.mid}, status=200)
 
 
-@require_POST
-# @login_required(login_url='/auth-error/')
+@api_view(['POST'])
 def add_letters(request, cid):
     authorized = check_authorized(cid, request.user.username, 'add')
     if isinstance(authorized, JsonResponse):
@@ -173,8 +169,7 @@ def add_letters(request, cid):
     return JsonResponse({"status": "resource created", "lid": letter.lid}, status=200)
 
 
-@require_POST
-# @login_required(login_url='/auth-error/')
+@api_view(['POST'])
 def add_comments(request, cid):
     authorized = check_authorized(cid, request.user.username, 'add')
     if isinstance(authorized, JsonResponse):

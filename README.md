@@ -13,6 +13,7 @@ Before you start you should have python 2.7 installed. You can download it [here
 pip install -r requirements.txt
 ```
 #### 2. Get the project running
+Add a folder called "db" to your capsoul-backend folder
 ```
 python manage.py makemigrations
 python manage.py migrate
