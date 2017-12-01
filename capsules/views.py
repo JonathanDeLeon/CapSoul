@@ -22,7 +22,7 @@ def all_capsules(request):
         del fields['contributors']
         recipients = fields['recipients']
         del fields['recipients']
-        fields['owner'] = User.objects.get(username=request.user.username)
+        fields['owner'] = User.objects.get(username='rabery')
 
         capsule = Capsule(**fields)
         capsule.save()
@@ -47,12 +47,13 @@ def specific_capsule(request, cid):
         capsule = Capsule.objects.filter(cid=cid)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        if capsule.get().unlocks_at > utc.localize(datetime.now()) and\
-                capsule.get().owner.username != request.user.username and\
-                request.user.username not in capsule.get().contributors.values('username'):
-            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=401)
-        if request.user.username not in capsule.get().recipients.values('username'):
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+       # if capsule.get().unlocks_at > utc.localize(datetime.now()) and\
+       #         capsule.get().owner.username != 'rabery' and\
+       #         not any(d['username'] == 'rabery' for d in capsule.get().contributors.values('username')):
+       #     return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=401)
+        # if 'rabery' not in capsule.get().recipients.values('username').values():
+       # if not any(d['username'] == 'rabery' for d in capsule.get().recipients.values('username')):
+       #     return JsonResponse({"status": "Not Authorized"}, status=401)
         try:
             media = Media.objects.filter(cid=capsule.get())
         except:
@@ -75,7 +76,7 @@ def specific_capsule(request, cid):
         return JsonResponse(temp_list, status=200)
     else:
         capsule = Capsule.objects.get(cid=cid)
-        if capsule.owner.username != request.user.username:
+        if capsule.owner.username != 'rabery':
             return JsonResponse({"status": "Not Authorized"}, status=401)
         fields = json.loads(request.body)
         del(fields['owner'])
@@ -83,7 +84,7 @@ def specific_capsule(request, cid):
         del fields['contributors']
         recipients = fields['recipients']
         del fields['recipients']
-        fields['owner'] = User.objects.get(username=request.user.username)
+        fields['owner'] = User.objects.get(username='rabery')
 
         contribs = []
         for contributor in contributors:
@@ -121,7 +122,7 @@ def get_letters(request, lid):
 @require_POST
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
-    owner = request.user
+    owner = User.objects.filter(username='rabery').get()
     media = Media(owner=owner, cid=capsule)
     media.save()
     media.file = request.FILES['file']

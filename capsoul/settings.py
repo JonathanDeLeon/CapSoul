@@ -146,6 +146,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+#STATIC_URL = '/capsoul/static/'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
@@ -154,3 +155,6 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 MEDIA_URL = '/files/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files/')
+
+USE_X_FORWARDED_HOST = True
+FORCE_SCRIPT_NAME = '/capsoul'
