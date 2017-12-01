@@ -9,7 +9,8 @@ from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from pytz import utc
 import os, capsoul.settings
-from database.models import Capsule, User, Media, Letters, Comments
+from database.models import Capsule, User, Media, Letter, Comment
+
 
 @require_http_methods(["GET", "POST"])
 # @login_required(login_url='/auth-error/')
@@ -56,7 +57,7 @@ def specific_capsule(request, cid):
         if request.user.username not in capsule.get().recipients.values('username'):
             return JsonResponse({"status": "Not Authorized"}, status=401)
         try:
-            media = Media.objects.filter(cid=capsule.get())
+            media = Media.objects.filter(capsule=capsule.get())
         except:
             media = []
         all_media = []
@@ -69,7 +70,7 @@ def specific_capsule(request, cid):
         temp_list['media'] = all_media
 
         try:
-            letters = Letters.objects.filter(cid=capsule.get()).values('lid')
+            letters = Letter.objects.filter(capsule=capsule.get()).values('lid')
         except:
             letters = []
         all_letters = []
@@ -78,7 +79,7 @@ def specific_capsule(request, cid):
         temp_list['letters'] = all_letters
 
         try:
-            comments = Comments.objects.filter(cid=capsule.get()).values('title', 'text', 'owner', 'comid', 'owner')
+            comments = Comment.objects.filter(capsule=capsule.get()).values('title', 'text', 'owner', 'comid', 'owner')
         except:
             comments = []
         all_comments = []
@@ -129,7 +130,7 @@ def get_media(request, mid):
 @require_GET
 # @login_required(login_url='/auth-error/')
 def get_letters(request, lid):
-    letter = Letters.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner')
+    letter = Letter.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner')
     if not letter:
         raise Http404("No Letters match given query.")
     return JsonResponse(list(letter)[0], status=200)
@@ -139,7 +140,7 @@ def get_letters(request, lid):
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
     owner = request.user
-    media = Media(owner=owner, cid=capsule)
+    media = Media(owner=owner, capsule=capsule)
     media.save()
     media.file = request.FILES['file']
     media.save()
@@ -150,9 +151,9 @@ def add_media(request, cid):
 # @login_required(login_url='/auth-error/')
 def add_letters(request, cid):
     fields = json.loads(request.body)
-    fields['cid'] = Capsule.objects.filter(cid=cid).get()
+    fields['capsule'] = Capsule.objects.filter(cid=cid).get()
     fields['owner'] = request.user
-    letter = Letters(**fields)
+    letter = Letter(**fields)
     letter.save()
     return JsonResponse({"status": "resource created", "lid": letter.lid}, status=200)
 
@@ -162,7 +163,7 @@ def add_letters(request, cid):
 def add_comments(request, cid):
     fields = json.loads(request.body)
     fields['owner'] = request.user
-    fields['cid'] = Capsule.objects.filter(cid=cid).get()
-    comment = Comments(**fields)
+    fields['capsule'] = Capsule.objects.filter(cid=cid).get()
+    comment = Comment(**fields)
     comment.save()
     return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
