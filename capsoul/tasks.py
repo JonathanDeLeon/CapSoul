@@ -7,14 +7,20 @@ from django.conf import settings
 from capsoul.celery import app
  
 @app.task
-def send_welcome_email(username):
+def send_welcome_email(uname):
     User = get_user_model()
-    user = User.objects.filter(username=username).values('email')
-    logging.warning("got user '%s'" % username)
-    send_mail(
-        'Welcome to CapSoul!',
-        'Welcome to CapSoul!',
-        'eric.marcondes@wallawalla.edu',
-        [user]
-    )
-    logging.warning("sent email to '%s'" % username)
+    try:
+        user = User.objects.all()
+        for u in user:
+            logging.warning("INFO: '%s'" % u.email + '%s' % u.username)
+            
+        send_mail(
+            'Welcome to CapSoul!',
+            'Welcome to CapSoul!',
+            'eric.marcondes@wallawalla.edu',
+            [user.email]
+        )
+        logging.warning("sent email to '%s'" % uname)
+    except User.DoesNotExist:
+        user = None
+    logging.warning("got user: '%s'" % user)

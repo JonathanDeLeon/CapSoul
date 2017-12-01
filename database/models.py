@@ -15,7 +15,7 @@ def user_post_save(sender, instance, signal, *args, **kwargs):
     if not instance.is_verified:
         # Send welcome email
         send_welcome_email.delay(instance.username)
- 
+
 signals.post_save.connect(user_post_save, sender=capsoul.settings.AUTH_USER_MODEL)
 
 def _upload_path(instance,filename):
@@ -33,7 +33,9 @@ class UserManager(BaseUserManager):
         username = self.model.normalize_username(username)
         user = self.model(username=username, **extra_fields)
         user.set_password(password)
+        print (user)
         user.save(using=self.db)
+        print (user)
         return user
 
     def create_user(self, username, password=None, **extra_fields):
