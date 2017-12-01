@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import json
 
+from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.core import serializers
@@ -60,12 +61,13 @@ def ajax_logout(request):
 
 @api_view(['GET'])
 def verify(request):
-    cookie = request.COOKIES.get('token_session')
-    if cookie is None:
+    # cookie = request.COOKIES.get('token_session')
+    # if cookie is None:
+    if request.user is AnonymousUser:
         return Response({'status':'Invalid token'}, status=404)
-    token, _ = ExpiringToken.objects.get_or_create(token=cookie)
-    user = ExpiringToken.objects.get(key=cookie).user
-    return Response({'status':'token is verified','user':json.loads(serializers.serialize('json', [user, ]))}, status=200)
+    # token, _ = ExpiringToken.objects.get_or_create(token=cookie)
+    # user = ExpiringToken.objects.get(key=cookie).user
+    return Response({'status':'token is verified','user':json.loads(serializers.serialize('json', [request.user, ]))}, status=200)
 
 class ObtainExpiringAuthToken(ObtainAuthToken):
     """View enabling username/password exchange for expiring token"""
