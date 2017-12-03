@@ -132,14 +132,16 @@ def get_media(request, mid):
 
 @api_view(['GET'])
 def get_letters(request, lid):
-    letter = Letter.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner', 'cid')
-    authorized = check_authorized(letter['cid'], request.user.username, 'view')
+    letter = Letter.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner', 'capsule_id')
+    authorized = check_authorized(letter[0]['capsule_id'], request.user.username, 'view')
     if isinstance(authorized, JsonResponse):
         return authorized
-    del letter['cid']
     if not letter:
         return Response({"status": "No Letters match given query."}, status=404)
-    return JsonResponse(list(letter)[0], status=200)
+    returnable = list(letter)[0]
+    returnable['cid'] = returnable['capsule_id']
+    del returnable['capsule_id']
+    return JsonResponse(returnable, status=200)
 
 
 @api_view(['POST'])
