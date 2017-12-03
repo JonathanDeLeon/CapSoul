@@ -66,6 +66,16 @@ def specific_capsule(request, cid):
         temp_list = list(capsule.values())[0]
         temp_list['media'] = all_media
 
+        contribs = []
+        for u in capsule.get().contributors.all():
+            contribs.append(u.username)
+        temp_list['contributors'] = contribs
+
+        recips = []
+        for u in capsule.get().recipients.all():
+            recips.append(u.username)
+        temp_list['recipients'] = recips
+
         try:
             letters = Letter.objects.filter(capsule=capsule.get()).values('lid')
         except:
