@@ -2,3 +2,4 @@ Django==1.11.6
 django-cors-headers==2.1.0
 djangorestframework==3.7.1
 Pillow==4.3.0
+celery==4.1.0

@@ -31,7 +31,6 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '10.9.6.123', 'docker.cs.wallawalla.e
 # Application definition
 
 INSTALLED_APPS = [
-    'djcelery',
     'database.apps.DatabaseConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -135,7 +134,7 @@ LOGIN_URL = '/login'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'America/Los_Angeles'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -157,16 +156,16 @@ MEDIA_URL = '/files/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files/')
 
 # REDIS/CELERY related settings 
-REDIS_HOST = 'localhost'
-REDIS_PORT = '6379'
-BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
-BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600} 
-CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
-CELERY_IMPORTS = ['capsoul.tasks']
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
 
 # Email settings
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_HOST_USER = '<eric.marcondes@wallawalla.edu'
-EMAIL_HOST_PASSWORD = '<s@@Rasec11>'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'wwu.capsoul@gmail.com'
+EMAIL_HOST_PASSWORD = 'wwucapsoul'
 EMAIL_PORT = 587

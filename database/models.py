@@ -6,21 +6,9 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from rest_framework.authtoken.models import Token
-import capsoul.settings
-from django.db.models import signals
-from capsoul.tasks import send_welcome_email
- 
- 
-def user_post_save(sender, instance, signal, *args, **kwargs):
-    if not instance.is_verified:
-        # Send welcome email
-        send_welcome_email.delay(instance.username)
-
-signals.post_save.connect(user_post_save, sender=capsoul.settings.AUTH_USER_MODEL)
 
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
-
 
 # Create your models here.
 class UserManager(BaseUserManager):

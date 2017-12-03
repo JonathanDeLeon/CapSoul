@@ -7,8 +7,41 @@ from datetime import datetime
 from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from pytz import utc
-
+from django.db import models
+from capsoul import tasks
 from database.models import Capsule, User, Media, Letters, Comments
+
+
+# Email Calling Functions
+def capsule_created_emails(sender, instance):
+    capsule = Capsule.objects.filter(cid=instance).get()
+    send_to = []
+    
+    for person in capsule.contributors.all():
+        send_to.append(person.email)
+
+    for person in capsule.recipients.all():
+        send_to.append(person.email)
+    
+    send_to.append(capsule.owner.email)
+
+    for s in send_to:
+        tasks.send_capsule_created_email.apply_async(args=[s], countdown=1)
+
+def capsule_unlocked_emails(sender, instance):
+    capsule = Capsule.objects.filter(cid=instance).get()
+    send_to = []
+    
+    for person in capsule.contributors.all():
+        send_to.append(person.email)
+
+    for person in capsule.recipients.all():
+        send_to.append(person.email)
+    
+    send_to.append(capsule.owner.email)
+
+    for s in send_to:
+        tasks.send_capsule_unlocked_email.apply_async(args=[s], eta=capsule.unlocks_at)
 
 
 @require_http_methods(["GET", "POST"])
@@ -23,6 +56,7 @@ def all_capsules(request):
         recipients = fields['recipients']
         del fields['recipients']
         fields['owner'] = User.objects.get(username=request.user.username)
+        #fields['owner'] = User.objects.get(username='eric')
 
         capsule = Capsule(**fields)
         capsule.save()
@@ -38,6 +72,9 @@ def all_capsules(request):
         capsule.recipients = recips
 
         capsule.save()
+        capsule_created_emails(instance=capsule.cid, sender=Capsule)
+        capsule_unlocked_emails(instance=capsule.cid, sender=Capsule)
+
         return JsonResponse({"status": "resource created", "cid": capsule.cid}, status=200)
 
 
@@ -84,7 +121,7 @@ def specific_capsule(request, cid):
         recipients = fields['recipients']
         del fields['recipients']
         fields['owner'] = User.objects.get(username=request.user.username)
-
+        
         contribs = []
         for contributor in contributors:
             contribs.append(User.objects.get(username=contributor))

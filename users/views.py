@@ -5,7 +5,8 @@ import json
 
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods, require_GET
-
+from capsoul import tasks
+from django.db import models
 from database.models import User
 
 
@@ -19,6 +20,8 @@ def all_users(request):
         fields['username'] = request.user.username
         current_user = User(**fields)
         current_user.save()
+        email = fields['email']
+        tasks.send_welcome_email.apply_async(args=[email], countdown=2)
         return JsonResponse({"status": "resource created"}, status=200)
 
 
