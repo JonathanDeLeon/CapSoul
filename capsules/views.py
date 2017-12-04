@@ -50,7 +50,7 @@ def specific_capsule(request, cid):
         capsule = Capsule.objects.filter(cid=cid, deleted=False)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        authorized = check_authorized(cid, request.user.username, 'view')
+        authorized = check_authorized(Capsule, cid, request.user.username, 'view')
         if isinstance(authorized, JsonResponse):
             return authorized
         try:
@@ -99,7 +99,7 @@ def specific_capsule(request, cid):
         capsule = Capsule.objects.get(cid=cid, deleted=False)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        authorized = check_authorized(cid, request.user.username, 'edit')
+        authorized = check_authorized(Capsule, cid, request.user.username, 'edit')
         if isinstance(authorized, JsonResponse):
             return authorized
 
@@ -129,7 +129,7 @@ def specific_capsule(request, cid):
         capsule = Capsule.objects.get(cid=cid, deleted=False)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        authorized = check_authorized(cid, request.user.username, 'delete')
+        authorized = check_authorized(Capsule, cid, request.user.username, 'delete')
         if isinstance(authorized, JsonResponse):
             return authorized
 
@@ -142,7 +142,7 @@ def specific_capsule(request, cid):
 def get_media(request, mid):
     if request.method == 'GET':
         media = Media.objects.filter(mid=mid, deleted=False).get()
-        authorized = check_authorized(media.capsule.cid, request.user.username, 'view')
+        authorized = check_authorized(Capsule, media.capsule.cid, request.user.username, 'view')
         if isinstance(authorized, JsonResponse):
             return authorized
         if not media:
@@ -153,7 +153,7 @@ def get_media(request, mid):
         return response
     elif request.method == 'DELETE':
         media = Media.objects.filter(mid=mid, deleted=False).get()
-        authorized = check_authorized(media.capsule.cid, request.user.username, 'view')
+        authorized = check_authorized(Media, mid, request.user.username, 'delete')
         if isinstance(authorized, JsonResponse):
             return authorized
         if not media:
@@ -167,7 +167,7 @@ def get_media(request, mid):
 def get_letters(request, lid):
     if request.method == 'GET':
         letter = Letter.objects.filter(lid=lid, deleted=False).values('title', 'text', 'lid', 'owner', 'capsule_id')
-        authorized = check_authorized(letter[0]['capsule_id'], request.user.username, 'delete')
+        authorized = check_authorized(Capsule, letter[0]['capsule_id'], request.user.username, 'view')
         if isinstance(authorized, JsonResponse):
             return authorized
         if not letter:
@@ -178,20 +178,20 @@ def get_letters(request, lid):
         return JsonResponse(returnable, status=200)
     elif request.method == 'DELETE':
         letter = Letter.objects.filter(lid=lid, deleted=False).get()
-        authorized = check_authorized(letter.capsule.cid, request.user.username, 'delete')
+        authorized = check_authorized(Letter, lid, request.user.username, 'delete')
         if isinstance(authorized, JsonResponse):
             return authorized
         if not letter:
             return Response({"status": "No media matches given query."}, status=404)
         letter.deleted = True
         letter.save()
-        return JsonResponse({"status": "media deleted", "mid": letter.lid}, status=200)
+        return JsonResponse({"status": "letter deleted", "lid": letter.lid}, status=200)
 
 
 @api_view(['POST'])
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid, deleted=False).get()
-    authorized = check_authorized(cid, request.user.username, 'add')
+    authorized = check_authorized(Capsule, cid, request.user.username, 'add')
     if isinstance(authorized, JsonResponse):
         return authorized
     owner = request.user
@@ -204,7 +204,7 @@ def add_media(request, cid):
 
 @api_view(['POST'])
 def add_letters(request, cid):
-    authorized = check_authorized(cid, request.user.username, 'add')
+    authorized = check_authorized(Capsule, cid, request.user.username, 'add')
     if isinstance(authorized, JsonResponse):
         return authorized
     fields = json.loads(request.body)
@@ -217,7 +217,7 @@ def add_letters(request, cid):
 
 @api_view(['POST'])
 def add_comments(request, cid):
-    authorized = check_authorized(cid, request.user.username, 'add')
+    authorized = check_authorized(Capsule, cid, request.user.username, 'add')
     if isinstance(authorized, JsonResponse):
         return authorized
     fields = json.loads(request.body)
@@ -228,9 +228,14 @@ def add_comments(request, cid):
     return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
 
 
-# Returns true if authorized, a JsonResponse otherwise
-def check_authorized(cid, username, action):
-    capsule = Capsule.objects.filter(cid=cid, deleted=False).get()
+def check_authorized(model, pk, username, action):
+    if model != Capsule:
+        obj = model.objects.filter(pk=pk, deleted=False).get()
+        if action in ['delete']:
+            if obj.owner.username != username:
+                return JsonResponse({"status": "Not Authorized"}, status=401)
+        pk = obj.capsule.pk
+    capsule = Capsule.objects.filter(cid=pk, deleted=False).get()
     if action in ['edit', 'delete']:
         if capsule.owner.username != username:
             return JsonResponse({"status": "Not Authorized"}, status=401)
