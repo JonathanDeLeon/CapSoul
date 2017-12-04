@@ -4,13 +4,16 @@ from __future__ import unicode_literals
 import json
 
 from datetime import datetime
-from django.http import JsonResponse, Http404, HttpResponse
-from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from django.http import JsonResponse, HttpResponse, Http404
 from pytz import utc
-from django.db import models
-from capsoul import tasks
-from database.models import Capsule, User, Media, Letters, Comments
 
+from capsoul import tasks
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+import os, capsoul.settings
+from database.models import Capsule, User, Media, Letter, Comment
 
 # Email Calling Functions
 def capsule_created_emails(sender, instance):
@@ -44,7 +47,7 @@ def capsule_unlocked_emails(sender, instance):
         tasks.send_capsule_unlocked_email.apply_async(args=[s], eta=capsule.unlocks_at)
 
 
-@require_http_methods(["GET", "POST"])
+@api_view(['GET', 'POST'])
 def all_capsules(request):
     if request.method == 'GET':
         all_capsules = Capsule.objects.all().values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
@@ -75,45 +78,67 @@ def all_capsules(request):
         capsule_created_emails(instance=capsule.cid, sender=Capsule)
         capsule_unlocked_emails(instance=capsule.cid, sender=Capsule)
 
-        return JsonResponse({"status": "resource created", "cid": capsule.cid}, status=200)
+        return Response({"status": "resource created", "cid": capsule.cid}, status=200)
 
 
-@require_http_methods(["GET", "POST"])
+@api_view(['GET', 'POST'])
 def specific_capsule(request, cid):
     if request.method == "GET":
         capsule = Capsule.objects.filter(cid=cid)
         if not capsule:
             raise Http404("No capsule matches the given query.")
-        if capsule.get().unlocks_at > utc.localize(datetime.now()) and\
-                capsule.get().owner.username != request.user.username and\
-                request.user.username not in capsule.get().contributors.values('username'):
-            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=401)
-        if request.user.username not in capsule.get().recipients.values('username'):
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+        authorized = check_authorized(cid, request.user.username, 'view')
+        if isinstance(authorized, JsonResponse):
+            return authorized
         try:
-            media = Media.objects.filter(cid=capsule.get())
+            media = Media.objects.filter(capsule=capsule.get())
         except:
             media = []
         all_media = []
         for m in media:
             all_media.append(m.mid)
+            media_dir = capsoul.settings.MEDIA_ROOT+'media/'+str(m.mid)
+            if os.path.exists(media_dir) is False:
+                del all_media[-1]
         temp_list = list(capsule.values())[0]
         temp_list['media'] = all_media
 
+        contribs = []
+        for u in capsule.get().contributors.all():
+            contribs.append(u.username)
+        temp_list['contributors'] = contribs
+
+        recips = []
+        for u in capsule.get().recipients.all():
+            recips.append(u.username)
+        temp_list['recipients'] = recips
+
         try:
-            letters = Letters.objects.filter(cid=capsule.get()).get()
+            letters = Letter.objects.filter(capsule=capsule.get()).values('lid')
         except:
             letters = []
         all_letters = []
         for l in letters:
-            all_letters.append(l.lid)
+            all_letters.append(l["lid"])
         temp_list['letters'] = all_letters
+
+        try:
+            comments = Comment.objects.filter(capsule=capsule.get()).values('title', 'text', 'owner', 'comid', 'owner')
+        except:
+            comments = []
+        all_comments = []
+        for c in comments:
+            all_comments.append(c)
+        temp_list['comments'] = all_comments
 
         return JsonResponse(temp_list, status=200)
     else:
         capsule = Capsule.objects.get(cid=cid)
-        if capsule.owner.username != request.user.username:
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+
+        authorized = check_authorized(cid, request.user.username, 'edit')
+        if isinstance(authorized, JsonResponse):
+            return authorized
+
         fields = json.loads(request.body)
         del(fields['owner'])
         contributors = fields['contributors']
@@ -138,53 +163,92 @@ def specific_capsule(request, cid):
         return JsonResponse({"status": "resource modified", "cid": capsule.cid}, status=200)
 
 
-@require_GET
+@api_view(['GET'])
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).get()
+    authorized = check_authorized(media.cid.cid, request.user.username, 'view')
+    if isinstance(authorized, JsonResponse):
+        return authorized
     if not media:
-        raise Http404("No media matches given query.")
+        return Response({"status": "No media matches given query."}, status=404)
     filename = media.file.name.split('/')[-1]
     response = HttpResponse(media.file, content_type='image/*')
     response['Content-Disposition'] = 'attatchment; filename=%s' % filename
     return response
 
-@require_GET
-def get_letters(request, lid):
-    letter = Letters.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner')
-    if not letter:
-        raise Http404("No Letters match given query.")
-    return JsonResponse(list(letter)[0], status=200)
 
-@require_POST
+@api_view(['GET'])
+def get_letters(request, lid):
+    letter = Letter.objects.filter(lid=lid).values('title', 'text', 'lid', 'owner', 'capsule_id')
+    authorized = check_authorized(letter[0]['capsule_id'], request.user.username, 'view')
+    if isinstance(authorized, JsonResponse):
+        return authorized
+    if not letter:
+        return Response({"status": "No Letters match given query."}, status=404)
+    returnable = list(letter)[0]
+    returnable['cid'] = returnable['capsule_id']
+    del returnable['capsule_id']
+    return JsonResponse(returnable, status=200)
+
+
+@api_view(['POST'])
 def add_media(request, cid):
     capsule = Capsule.objects.filter(cid=cid).get()
+    authorized = check_authorized(cid, request.user.username, 'add')
+    if isinstance(authorized, JsonResponse):
+        return authorized
     owner = request.user
-    media = Media(owner=owner, cid=capsule)
+    media = Media(owner=owner, capsule=capsule)
     media.save()
     media.file = request.FILES['file']
     media.save()
     return JsonResponse({"status": "resource created", "mid": media.mid}, status=200)
 
 
-@require_POST
+@api_view(['POST'])
 def add_letters(request, cid):
-    capsule = Capsule.objects.filter(cid=cid).get()
-    owner = request.user
-    letter = Letters(owner=owner, cid=capsule)
-    letter.save()
-    letter.title = request.POST['title']
-    letter.text = request.POST['text']
+    authorized = check_authorized(cid, request.user.username, 'add')
+    if isinstance(authorized, JsonResponse):
+        return authorized
+    fields = json.loads(request.body)
+    fields['capsule'] = Capsule.objects.filter(cid=cid).get()
+    fields['owner'] = request.user
+    letter = Letter(**fields)
     letter.save()
     return JsonResponse({"status": "resource created", "lid": letter.lid}, status=200)
 
 
-@require_POST
+@api_view(['POST'])
 def add_comments(request, cid):
+    authorized = check_authorized(cid, request.user.username, 'add')
+    if isinstance(authorized, JsonResponse):
+        return authorized
+    fields = json.loads(request.body)
+    fields['owner'] = request.user
+    fields['capsule'] = Capsule.objects.filter(cid=cid).get()
+    comment = Comment(**fields)
+    comment.save()
+    return Response({"status": "resource created", "comid": comment.comid}, status=status.HTTP_201_CREATED)
+
+
+# Returns true if authorized, a JsonResponse otherwise
+def check_authorized(cid, username, action):
     capsule = Capsule.objects.filter(cid=cid).get()
-    owner = request.user
-    comment = Comments(owner=owner, cid=capsule)
-    comment.save()
-    comment.title = request.POST['title']
-    comment.text = request.POST['text']
-    comment.save()
-    return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
+    if action == 'edit':
+        if capsule.owner.username != username:
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    elif action == 'add':
+        if capsule.owner.username != username and\
+                not any(username == user['username'] for user in capsule.contributors.values('username')):
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+    elif action == 'view':
+        if capsule.unlocks_at > utc.localize(datetime.now()) and\
+                any(username == user['username'] for user in capsule.recipients.values('username')):
+            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=status.HTTP_401_UNAUTHORIZED)
+        if capsule.owner.username != username and\
+                not any(username == user['username'] for user in capsule.contributors.values('username')) and\
+                not any(username == user['username'] for user in capsule.recipients.values('username')):
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        return True
+    else:
+        return JsonResponse({"status": "Not Authorized", "reason": "Programmer Error"}, status=status.HTTP_401_UNAUTHORIZED)

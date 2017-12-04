@@ -105,7 +105,7 @@ class ExpiringToken(Token):
 class Media(models.Model):
     mid = models.AutoField(primary_key=True)
     file = models.FileField(upload_to=_upload_path)
-    cid = models.ForeignKey('Capsule', related_name='cid_of_media')
+    capsule = models.ForeignKey('Capsule', related_name='media_capsule', null = True)
     owner = models.ForeignKey('User', related_name='media_owner')
     
     def __str__(self):
@@ -116,12 +116,12 @@ class Media(models.Model):
         return "media/"+filename
 
 
-class Letters(models.Model):
+class Letter(models.Model):
     lid = models.AutoField(primary_key=True)
     title = models.CharField(default='', max_length=255)
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='letter_owner')
-    cid = models.ForeignKey('Capsule', related_name='cid_of_letter')
+    capsule = models.ForeignKey('Capsule', related_name='cid_of_letter')
 
     def __str__(self):
         return str(self.lid)
@@ -134,21 +134,21 @@ class Capsule(models.Model):
     contributors = models.ManyToManyField('User', related_name='capsule_contributors')
     recipients = models.ManyToManyField('User', related_name='capsule_recipients')
     title = models.CharField(max_length=255)
-    description = models.TextField(default='')    
+    description = models.TextField(default='')
     media = models.ManyToManyField('Media', related_name='media', blank=True)
-    letter = models.ManyToManyField('Letters', related_name='letters', blank=True)
+    letter = models.ManyToManyField('Letter', related_name='letters', blank=True)
     date_created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return str(self.cid)
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     comid = models.AutoField(primary_key=True)
     title = models.CharField(default='', max_length=255)
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='comment_owner')
-    cid = models.ForeignKey('Capsule', related_name='cid_of_comment')
+    capsule = models.ForeignKey('Capsule', related_name='comment_capsule')
 
     def __str__(self):
         return str(self.comid)
