@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from database.models import User
 
 
-# @api_view(['GET', 'POST'])
+@api_view(['GET', 'POST'])
 def all_users(request):
     if request.method == 'GET':
         all_users = User.objects.all().values('username', 'first_name', 'last_name')
@@ -38,3 +38,13 @@ def specific_user(request, uname):
     if not user:
         return JsonResponse({"status": "No user matches the given query."}, status=404)
     return JsonResponse(list(user)[0], status=200)
+
+@api_view(['GET'])
+def get_photo(request, uname):
+    user_pic = User.objects.filter(username=uname).get('photo') 
+    if not user_pic:
+        return Response({"status": "No profile picture matches given query."}, status=404)
+    filename = user_pic.name.split('/')[-1]
+    response = HttpResponse(user_pic, content_type='image/*')
+    response['Content-Disposition'] = 'attatchment; filename=%s' % filename
+    return response
