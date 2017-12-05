@@ -132,7 +132,7 @@ LOGIN_URL = '/login'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'America/Los_Angeles'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -152,3 +152,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 MEDIA_URL = '/files/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'files/')
+
+# REDIS/CELERY related settings 
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Email settings
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'wwu.capsoul@gmail.com'
+EMAIL_HOST_PASSWORD = 'wwucapsoul'
+EMAIL_PORT = 587

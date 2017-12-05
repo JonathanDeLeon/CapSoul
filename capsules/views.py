@@ -7,18 +7,59 @@ from datetime import datetime
 from django.http import JsonResponse, HttpResponse, Http404
 from pytz import utc
 
+from capsoul import tasks
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 
 import os, capsoul.settings
 from database.models import Capsule, User, Media, Letter, Comment
+
+# Email Calling Functions
+def capsule_created_emails(sender, instance):
+    capsule = Capsule.objects.filter(cid=instance).get()
+    send_to = []
+    
+    for person in capsule.contributors.all():
+        send_to.append(person.email)
+
+    for person in capsule.recipients.all():
+        send_to.append(person.email)
+    
+    send_to.append(capsule.owner.email)
+
+    for s in send_to:
+        tasks.send_capsule_created_email.apply_async(args=[s], countdown=1)
+
+def capsule_unlocked_emails(sender, instance):
+    capsule = Capsule.objects.filter(cid=instance).get()
+    send_to = []
+    
+    for person in capsule.contributors.all():
+        send_to.append(person.email)
+
+    for person in capsule.recipients.all():
+        send_to.append(person.email)
+    
+    send_to.append(capsule.owner.email)
+
+    for s in send_to:
+        tasks.send_capsule_unlocked_email.apply_async(args=[s], eta=capsule.unlocks_at)
 
 
 @api_view(['GET', 'POST'])
 def all_capsules(request):
     if request.method == 'GET':
-        all_capsules = Capsule.objects.filter(deleted=False).values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
-        return JsonResponse({'capsules': list(all_capsules)}, status=200)
+        all_capsules = Capsule.objects.all()
+        capsules_output = {"capsules": []}
+        for capsule in all_capsules:
+            current_capsule = {key: getattr(capsule, key) for key in ['cid', 'unlocks_at', 'title']}
+            current_capsule['owner'] = capsule.owner.username
+            current_capsule['recipients'] = [recipient.username for recipient in capsule.recipients.all()]
+            current_capsule['contributors'] = [contributor.username for contributor in capsule.contributors.all()]
+
+            capsules_output['capsules'].append(current_capsule)
+        return JsonResponse(capsules_output, status=200)
     else:
         fields = json.loads(request.body)
         contributors = fields['contributors']
@@ -41,6 +82,9 @@ def all_capsules(request):
         capsule.recipients = recips
 
         capsule.save()
+        capsule_created_emails(instance=capsule.cid, sender=Capsule)
+        capsule_unlocked_emails(instance=capsule.cid, sender=Capsule)
+
         return Response({"status": "resource created", "cid": capsule.cid}, status=200)
 
 
@@ -110,7 +154,7 @@ def specific_capsule(request, cid):
         recipients = fields['recipients']
         del fields['recipients']
         fields['owner'] = User.objects.get(username=request.user.username)
-
+        
         contribs = []
         for contributor in contributors:
             contribs.append(User.objects.get(username=contributor))
@@ -225,7 +269,7 @@ def add_comments(request, cid):
     fields['capsule'] = Capsule.objects.filter(cid=cid, deleted=False).get()
     comment = Comment(**fields)
     comment.save()
-    return JsonResponse({"status": "resource created", "comid": comment.comid}, status=200)
+    return Response({"status": "resource created", "comid": comment.comid}, status=status.HTTP_201_CREATED)
 
 
 def check_authorized(model, pk, username, action):
@@ -238,19 +282,19 @@ def check_authorized(model, pk, username, action):
     capsule = Capsule.objects.filter(cid=pk, deleted=False).get()
     if action in ['edit', 'delete']:
         if capsule.owner.username != username:
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
     elif action == 'add':
         if capsule.owner.username != username and\
                 not any(username == user['username'] for user in capsule.contributors.values('username')):
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
     elif action == 'view':
         if capsule.unlocks_at > utc.localize(datetime.now()) and\
                 any(username == user['username'] for user in capsule.recipients.values('username')):
-            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=401)
+            return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=status.HTTP_401_UNAUTHORIZED)
         if capsule.owner.username != username and\
                 not any(username == user['username'] for user in capsule.contributors.values('username')) and\
                 not any(username == user['username'] for user in capsule.recipients.values('username')):
-            return JsonResponse({"status": "Not Authorized"}, status=401)
+            return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
         return True
     else:
-        return JsonResponse({"status": "Not Authorized", "reason": "Programmer Error"}, status=401)
+        return JsonResponse({"status": "Not Authorized", "reason": "Programmer Error"}, status=status.HTTP_401_UNAUTHORIZED)
