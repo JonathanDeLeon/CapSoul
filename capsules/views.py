@@ -17,7 +17,7 @@ from database.models import Capsule, User, Media, Letter, Comment
 
 # Email Calling Functions
 def capsule_created_emails(sender, instance):
-    capsule = Capsule.objects.filter(cid=instance).get()
+    capsule = Capsule.objects.filter(cid=instance, deleted=False).get()
     send_to = []
     
     for person in capsule.contributors.all():
@@ -32,7 +32,7 @@ def capsule_created_emails(sender, instance):
         tasks.send_capsule_created_email.apply_async(args=[s], countdown=1)
 
 def capsule_unlocked_emails(sender, instance):
-    capsule = Capsule.objects.filter(cid=instance).get()
+    capsule = Capsule.objects.filter(cid=instance, deleted=False).get()
     send_to = []
     
     for person in capsule.contributors.all():
