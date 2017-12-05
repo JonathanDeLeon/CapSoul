@@ -47,11 +47,19 @@ def capsule_unlocked_emails(sender, instance):
         tasks.send_capsule_unlocked_email.apply_async(args=[s], eta=capsule.unlocks_at)
 
 
-@api_view(['GET', 'POST'])
+# @api_view(['GET', 'POST'])
 def all_capsules(request):
     if request.method == 'GET':
-        all_capsules = Capsule.objects.all().values('cid', 'unlocks_at', 'title', 'recipients', 'owner')
-        return JsonResponse({'capsules': list(all_capsules)}, status=200)
+        all_capsules = Capsule.objects.all()
+        capsules_output = {"capsules": []}
+        for capsule in all_capsules:
+            current_capsule = {key: getattr(capsule, key) for key in ['cid', 'unlocks_at', 'title']}
+            current_capsule['owner'] = capsule.owner.username
+            current_capsule['recipients'] = [recipient.username for recipient in capsule.recipients.all()]
+            current_capsule['contributors'] = [contributor.username for contributor in capsule.contributors.all()]
+
+            capsules_output['capsules'].append(current_capsule)
+        return JsonResponse(capsules_output, status=200)
     else:
         fields = json.loads(request.body)
         contributors = fields['contributors']
@@ -59,7 +67,6 @@ def all_capsules(request):
         recipients = fields['recipients']
         del fields['recipients']
         fields['owner'] = User.objects.get(username=request.user.username)
-        #fields['owner'] = User.objects.get(username='eric')
 
         capsule = Capsule(**fields)
         capsule.save()
@@ -166,7 +173,7 @@ def specific_capsule(request, cid):
 @api_view(['GET'])
 def get_media(request, mid):
     media = Media.objects.filter(mid=mid).get()
-    authorized = check_authorized(media.cid.cid, request.user.username, 'view')
+    authorized = check_authorized(media.capsule.cid, request.user.username, 'view')
     if isinstance(authorized, JsonResponse):
         return authorized
     if not media:
