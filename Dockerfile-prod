@@ -14,6 +14,8 @@ COPY . /code/
 RUN pip install -U pip
 RUN pip install -Ur requirements.txt
 RUN pip install uwsgi
+RUN redis-server --daemonize yes
+RUN celery worker -A capsoul -E --detach
 
 RUN python /code/manage.py migrate
 RUN python /code/manage.py collectstatic --noinput
