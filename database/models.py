@@ -107,6 +107,7 @@ class Media(models.Model):
     file = models.FileField(upload_to=_upload_path)
     capsule = models.ForeignKey('Capsule', related_name='media_capsule', null = True)
     owner = models.ForeignKey('User', related_name='media_owner')
+    deleted = models.BooleanField(default=False)
     
     def __str__(self):
         return str(self.mid)
@@ -122,6 +123,7 @@ class Letter(models.Model):
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='letter_owner')
     capsule = models.ForeignKey('Capsule', related_name='cid_of_letter')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.lid)
@@ -138,6 +140,7 @@ class Capsule(models.Model):
     media = models.ManyToManyField('Media', related_name='media', blank=True)
     letter = models.ManyToManyField('Letter', related_name='letters', blank=True)
     date_created = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.cid)
@@ -149,6 +152,7 @@ class Comment(models.Model):
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='comment_owner')
     capsule = models.ForeignKey('Capsule', related_name='comment_capsule')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.comid)
