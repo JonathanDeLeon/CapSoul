@@ -47,8 +47,7 @@ def register(request):
         password = data['password']
     except:
         return Response({'status':'Params not set'}, status=status.HTTP_400_BAD_REQUEST)
-    user = UserModel.objects.get(username=username)
-    if user is not None:
+    if UserModel.objects.filter(username=username).exists():
         return Response({'status':'User already exists'}, status=status.HTTP_404_NOT_FOUND)
     user = UserModel.objects.create_user(username, password)
     token, created = ExpiringToken.objects.get_or_create(user=user)
