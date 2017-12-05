@@ -11,3 +11,4 @@
 .vsCode/*
 static/*
 files/*
+*.pid
