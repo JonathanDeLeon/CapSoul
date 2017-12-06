@@ -14,8 +14,6 @@ COPY . /code/
 RUN pip install -U pip
 RUN pip install -Ur requirements.txt
 RUN pip install uwsgi
-RUN redis-server --daemonize yes
-RUN celery worker -A capsoul -E --detach
 
 RUN python /code/manage.py migrate
 RUN python /code/manage.py collectstatic --noinput
@@ -24,4 +22,4 @@ EXPOSE 8000
 
 # Specify the command to run when the image is run.
 # CMD python /code/manage.py runserver 0.0.0.0:8000
-CMD uwsgi --http=0.0.0.0:8000 --chdir /code --wsgi-file capsoul/wsgi.py --master --processes 4 --threads 2
+CMD redis-server --daemonize yes && celery worker -A capsoul -E --detach && uwsgi --http=0.0.0.0:8000 --chdir /code --wsgi-file capsoul/wsgi.py --master --processes 4 --threads 2
