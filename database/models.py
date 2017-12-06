@@ -1,7 +1,5 @@
-
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from datetime import timedelta
 from django.db import models
 from django.utils import timezone
@@ -9,10 +7,8 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from rest_framework.authtoken.models import Token
 
-
 def _upload_path(instance,filename):
     return instance.get_upload_path(filename)
-
 
 # Create your models here.
 class UserManager(BaseUserManager):
@@ -25,7 +21,9 @@ class UserManager(BaseUserManager):
         username = self.model.normalize_username(username)
         user = self.model(username=username, **extra_fields)
         user.set_password(password)
+        print (user)
         user.save(using=self.db)
+        print (user)
         return user
 
     def create_user(self, username, password=None, **extra_fields):
@@ -62,6 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField('verified', default=False)
 
     # Requirements for custom user
     USERNAME_FIELD = 'username'
@@ -108,6 +107,7 @@ class Media(models.Model):
     file = models.FileField(upload_to=_upload_path)
     capsule = models.ForeignKey('Capsule', related_name='media_capsule', null = True)
     owner = models.ForeignKey('User', related_name='media_owner')
+    deleted = models.BooleanField(default=False)
     
     def __str__(self):
         return str(self.mid)
@@ -123,6 +123,7 @@ class Letter(models.Model):
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='letter_owner')
     capsule = models.ForeignKey('Capsule', related_name='cid_of_letter')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.lid)
@@ -139,6 +140,7 @@ class Capsule(models.Model):
     media = models.ManyToManyField('Media', related_name='media', blank=True)
     letter = models.ManyToManyField('Letter', related_name='letters', blank=True)
     date_created = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.cid)
@@ -150,6 +152,7 @@ class Comment(models.Model):
     text = models.TextField(default='')
     owner = models.ForeignKey('User', related_name='comment_owner')
     capsule = models.ForeignKey('Capsule', related_name='comment_capsule')
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.comid)
