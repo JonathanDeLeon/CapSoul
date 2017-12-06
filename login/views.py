@@ -49,7 +49,12 @@ def register(request):
         return Response({'status':'Params not set'}, status=status.HTTP_400_BAD_REQUEST)
     if UserModel.objects.filter(username=username).exists():
         return Response({'status':'User already exists'}, status=status.HTTP_404_NOT_FOUND)
-    user = UserModel.objects.create_user(username, password)
+    del data['username']
+    del data['password']
+    try:
+        user = UserModel.objects.create_user(username, password, **data)
+    except:
+        return Response({'status':'There is an invalid keyword parameter'}, status=status.HTTP_400_BAD_REQUEST)
     token, created = ExpiringToken.objects.get_or_create(user=user)
     response = Response({'status':'User has successfully been created','token':token.key}, status=status.HTTP_201_CREATED)
     # response.set_cookie('token_session', token.key)
