@@ -288,7 +288,7 @@ def check_authorized(model, pk, username, action):
                 not any(username == user['username'] for user in capsule.contributors.values('username')):
             return JsonResponse({"status": "Not Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
     elif action == 'view':
-        if capsule.unlocks_at > utc.localize(datetime.now()) and\
+        if capsule.unlocks_at > datetime.now(utc) and\
                 any(username == user['username'] for user in capsule.recipients.values('username')):
             return JsonResponse({"status": "Capsule is locked. Check back later!"}, status=status.HTTP_401_UNAUTHORIZED)
         if capsule.owner.username != username and\
