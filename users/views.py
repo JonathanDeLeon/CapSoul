@@ -18,16 +18,19 @@ def all_users(request):
         all_users = User.objects.all().values('username', 'first_name', 'last_name')
         return JsonResponse({'users': list(all_users)}, status=status.HTTP_200_OK)
     else:
+        current_user = User.objects.filter(username=request.user.username).get()
         fields = {}
         try:
             fields = json.loads(request.body)
         except ValueError:
             for field in request.POST:
                 fields[field] = request.POST[field]
-        fields['username'] = request.user.username
-        current_user = User(**fields)
-        current_user.save()
-        current_user.photo = request.FILES['photo']
+
+        for field in fields:
+            if hasattr(current_user, field):
+                setattr(current_user, field,  fields[field])
+        if len(request.FILES) > 0:
+            current_user.photo = request.FILES['photo']
         current_user.save()
         return Response({"status": "profile updated"}, status=status.HTTP_201_CREATED)
 
@@ -44,6 +47,8 @@ def get_photo(request, uname):
     user = User.objects.filter(username=uname).get() 
     if not user:
         return Response({"status": "No profile picture matches given query."}, status=404)
+    if not user.photo:
+        return Response({"status": "User has no profile picture."}, status=404)
     filename = user.photo.name.split('/')[-1]
     response = HttpResponse(user.photo, content_type='image/*')
     response['Content-Disposition'] = 'attatchment; filename=%s' % filename

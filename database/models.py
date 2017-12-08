@@ -21,9 +21,7 @@ class UserManager(BaseUserManager):
         username = self.model.normalize_username(username)
         user = self.model(username=username, **extra_fields)
         user.set_password(password)
-        print (user)
         user.save(using=self.db)
-        print (user)
         return user
 
     def create_user(self, username, password=None, **extra_fields):
