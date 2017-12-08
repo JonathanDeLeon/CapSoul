@@ -10,7 +10,7 @@ def send_welcome_email(email):
     logging.info("User Email: %s" % email)
     send_mail(
         'Welcome to CapSoul!',
-        'Welcome to CapSoul!\n Invite your friends to join you at CapSoul:',
+        'Welcome to CapSoul!\nInvite your friends to join you at CapSoul. \nLogin and start sending Capsules: https://capsoul.cs.wallawalla.edu/',
         'wwu.capsoul@gmail.com',
         [email]
         )
@@ -20,7 +20,7 @@ def send_welcome_email(email):
 def send_capsule_created_email(email):
     send_mail(
         'A Capsule has been created!',
-        'Login to your CapSoul account and checkout the recently created capsule!',
+        'Login to your CapSoul account and checkout the recently created capsule!\nhttps://capsoul.cs.wallawalla.edu/',
         'wwu.capsoul@gmail.com',
         [email]
     )
@@ -30,7 +30,7 @@ def send_capsule_created_email(email):
 def send_capsule_unlocked_email(email):
     send_mail(
         'Your Capsule has unlocked!',
-        'Login to your CapSoul account and checkout the recently unlocked capsule!',
+        'Login to your CapSoul account and checkout the recently unlocked capsule!\nhttps://capsoul.cs.wallawalla.edu/',
         'wwu.capsoul@gmail.com',
         [email]
     )

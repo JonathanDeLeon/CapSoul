@@ -29,8 +29,6 @@ def all_users(request):
         current_user.save()
         current_user.photo = request.FILES['photo']
         current_user.save()
-        email = fields['email']
-        tasks.send_welcome_email.apply_async(args=[email], countdown=2)
         return Response({"status": "profile updated"}, status=status.HTTP_201_CREATED)
 
 
