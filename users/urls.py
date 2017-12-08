@@ -4,5 +4,6 @@ from django.contrib import admin
 import users.views as views
 
 urlpatterns = [
-    url(r'^(.*)', views.specific_user),
+    url(r'^media/(.*)', views.get_photo),
+    url(r'^(.*)', views.specific_user)
 ]
