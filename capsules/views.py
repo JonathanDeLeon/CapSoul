@@ -186,7 +186,6 @@ def specific_capsule(request, cid):
 def get_media(request, mid):
     if request.method == 'GET':
         media = Media.objects.filter(mid=mid, deleted=False).get()
-        print(media.capsule)
         authorized = check_authorized(Capsule, media.capsule.cid, request.user.username, 'view')
         if isinstance(authorized, JsonResponse):
             return authorized
