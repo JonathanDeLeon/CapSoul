@@ -7,7 +7,6 @@ from capsoul.celery import app
 
 @app.task
 def send_welcome_email(email):
-    logging.info("User Email: %s" % email)
     send_mail(
         'Welcome to CapSoul!',
         'Welcome to CapSoul!\nInvite your friends to join you at CapSoul. \nLogin and start sending Capsules: https://capsoul.cs.wallawalla.edu/',
@@ -24,7 +23,7 @@ def send_capsule_created_email(email):
         'wwu.capsoul@gmail.com',
         [email]
     )
-    print("New capsule email sent to: '%s' " % email)
+    logging.info("New capsule email sent to: '%s' " % email)
 
 @app.task
 def send_capsule_unlocked_email(email):
@@ -34,4 +33,4 @@ def send_capsule_unlocked_email(email):
         'wwu.capsoul@gmail.com',
         [email]
     )
-    print("Unlocked capsule email sent to: '%s' " % email)
+    logging.info("Unlocked capsule email sent to: '%s' " % email)

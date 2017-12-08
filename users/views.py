@@ -47,6 +47,8 @@ def get_photo(request, uname):
     user = User.objects.filter(username=uname).get() 
     if not user:
         return Response({"status": "No profile picture matches given query."}, status=404)
+    if not user.photo:
+        return Response({"status": "User has no profile picture."}, status=404)
     filename = user.photo.name.split('/')[-1]
     response = HttpResponse(user.photo, content_type='image/*')
     response['Content-Disposition'] = 'attatchment; filename=%s' % filename
