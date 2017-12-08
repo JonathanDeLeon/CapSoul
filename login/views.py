@@ -30,6 +30,7 @@ def ajax_login(request):
         password = data['password']
     except:
         return Response({'status':'Params not set'}, status=status.HTTP_400_BAD_REQUEST)
+    # TODO: Authenticate sometime returns None
     user = authenticate(request, username=username, password=password)
     if user is None:
         return Response({'status':'No user matches the given query'}, status=status.HTTP_404_NOT_FOUND)
