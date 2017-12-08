@@ -33,7 +33,10 @@ def ajax_login(request):
     user = authenticate(request, username=username, password=password)
     if user is None:
         return Response({'status':'No user matches the given query'}, status=status.HTTP_404_NOT_FOUND)
-    token, created = ExpiringToken.objects.get_or_create(user=user)
+    token = ExpiringToken.objects.get(user=user)
+    if token.expired():
+        token.delete()
+        token = ExpiringToken.objects.create(user=user)
     response = Response({'status':'login successful','token':token.key, 'user':json.loads(serializers.serialize('json', [user, ]))}, status=status.HTTP_200_OK)
     # response.set_cookie('token_session', token.key)
     return response
@@ -70,6 +73,10 @@ def ajax_logout(request):
 def verify(request):
     if request.user is AnonymousUser:
         return Response({'status':'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED, headers='WWW-Authenticate: Token')
+    token = ExpiringToken.objects.get(user=request.user)
+    if token.expired():
+        token.delete()
+        token = ExpiringToken.objects.create(user=request.user)
     return Response({'status':'token is verified','user':json.loads(serializers.serialize('json', [request.user, ]))}, status=status.HTTP_200_OK)
 
 class ObtainExpiringAuthToken(ObtainAuthToken):
