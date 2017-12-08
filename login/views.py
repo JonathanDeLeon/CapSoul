@@ -12,9 +12,9 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-
 from rest_framework.response import Response
 
+from capsoul import tasks
 from database.models import ExpiringToken
 
 # Get the User Model
@@ -48,6 +48,7 @@ def register(request):
         data = json.loads(request.body)
         username = data['username']
         password = data['password']
+        email = data['email']
     except:
         return Response({'status':'Params not set'}, status=status.HTTP_400_BAD_REQUEST)
     if UserModel.objects.filter(username=username).exists():
@@ -60,6 +61,7 @@ def register(request):
         return Response({'status':'There is an invalid keyword parameter'}, status=status.HTTP_400_BAD_REQUEST)
     token, created = ExpiringToken.objects.get_or_create(user=user)
     response = Response({'status':'User has successfully been created','token':token.key}, status=status.HTTP_201_CREATED)
+    tasks.send_welcome_email.apply_async(args=[email], countdown=2)
     # response.set_cookie('token_session', token.key)
     return response
 
