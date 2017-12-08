@@ -50,7 +50,7 @@ def capsule_unlocked_emails(sender, instance):
 @api_view(['GET', 'POST'])
 def all_capsules(request):
     if request.method == 'GET':
-        all_capsules = Capsule.objects.all()
+        all_capsules = Capsule.objects.filter(deleted=False)
         capsules_output = {"capsules": []}
         for capsule in all_capsules:
             current_capsule = {key: getattr(capsule, key) for key in ['cid', 'unlocks_at', 'title']}
