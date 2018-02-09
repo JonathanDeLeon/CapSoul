@@ -1,0 +1,23 @@
+{
+  "name": "capsoul",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^0.17.0",
+    "bootstrap": "^4.0.0-beta",
+    "react": "^16.0.0",
+    "react-axios": "^1.0.3",
+    "react-datepicker": "^0.60.2",
+    "react-icon-tint": "^1.0.1",
+    "react-router-dom": "^4.2.2",
+    "react-scripts": "1.0.14",
+    "react-select": "^1.1.0",
+    "reactstrap": "^5.0.0-alpha.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
